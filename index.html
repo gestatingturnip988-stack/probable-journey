@@ -81,12 +81,12 @@
         .bar-fill {
             height: 100%;
             width: 100%;
-            transition: width 0.2s;
+            transition: width 0.15s ease-out;
         }
 
         .bar-fill.exp { background: #00ffaa; width: 45%; }
         .bar-fill.hp { background: #ff3344; width: 100%; }
-        .bar-fill.energy { background: #ffcc00; width: 80%; }
+        .bar-fill.energy { background: #ffcc00; width: 100%; }
         .bar-fill.hunger { background: #a66a38; width: 65%; }
 
         .bar-label {
@@ -164,7 +164,7 @@
             color: #00ffcc;
         }
 
-        /* --- RIGHT CONTROL PANEL --- */
+        /* --- RIGHT RADIAL CONTROL PANEL (Matching Sketch 1) --- */
         .controls-right {
             position: absolute;
             bottom: 15px;
@@ -172,14 +172,21 @@
             z-index: 10;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            gap: 10px;
+            align-items: flex-end;
+            gap: 8px;
         }
 
-        .radial-actions {
+        .camera-utility-row {
             display: flex;
             gap: 6px;
-            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .radial-action-arc {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            align-items: flex-end;
         }
 
         .btn {
@@ -187,7 +194,7 @@
             border: 2px solid #fff;
             border-radius: 8px;
             font-weight: bold;
-            font-size: 12px;
+            font-size: 11px;
             color: #000;
             display: flex;
             justify-content: center;
@@ -197,13 +204,31 @@
         }
 
         .action-btn {
-            width: 52px;
-            height: 52px;
-            border-radius: 50%;
+            width: 60px;
+            height: 42px;
+            border-radius: 20px;
             background: #ffaa00;
             color: #000;
-            font-size: 11px;
+            font-size: 10px;
             border: 2px solid #fff;
+            display: flex;
+            flex-direction: column;
+            line-height: 1.1;
+            transition: opacity 0.2s, background 0.1s;
+        }
+
+        .action-btn:active { background: #00ffcc; }
+        .action-btn.disabled {
+            opacity: 0.4;
+            background: #555 !important;
+            border-color: #888 !important;
+            color: #aaa !important;
+        }
+
+        .action-btn .cost {
+            font-size: 8px;
+            color: #333;
+            font-weight: normal;
         }
 
         .cam-btn {
@@ -223,18 +248,19 @@
 
         /* Joystick Base & Knob */
         #joystick-base {
-            width: 120px;
-            height: 120px;
+            width: 110px;
+            height: 110px;
             background: rgba(255, 255, 255, 0.15);
             border: 2px solid rgba(255, 255, 255, 0.5);
             border-radius: 50%;
             position: relative;
             touch-action: none;
+            margin-top: 4px;
         }
 
         #joystick-knob {
-            width: 50px;
-            height: 50px;
+            width: 46px;
+            height: 46px;
             background: rgba(0, 255, 204, 0.85);
             border: 2px solid #fff;
             border-radius: 50%;
@@ -298,7 +324,6 @@
             overflow: hidden;
         }
 
-        /* Left Side: Character Equipment Paperdoll */
         .equipment-panel {
             width: 48%;
             background: rgba(255, 255, 255, 0.03);
@@ -347,9 +372,7 @@
             left: 3px;
         }
 
-        .equip-slot .item-icon {
-            font-size: 18px;
-        }
+        .equip-slot .item-icon { font-size: 18px; }
 
         .character-avatar-box {
             background: rgba(0, 0, 0, 0.4);
@@ -365,12 +388,8 @@
             text-align: center;
         }
 
-        .avatar-placeholder {
-            font-size: 50px;
-            margin-bottom: 5px;
-        }
+        .avatar-placeholder { font-size: 50px; margin-bottom: 5px; }
 
-        /* Right Side: Tabbed Inventory & Systems */
         .inventory-panel {
             width: 52%;
             display: flex;
@@ -435,7 +454,6 @@
             font-weight: bold;
         }
 
-        /* Skill List Styling */
         .skill-item {
             background: rgba(255,255,255,0.05);
             border: 1px solid #445566;
@@ -444,10 +462,7 @@
             margin-bottom: 6px;
         }
 
-        .skill-item b {
-            color: #00ffcc;
-            font-size: 12px;
-        }
+        .skill-item b { color: #00ffcc; font-size: 12px; }
 
         #mobile-log {
             position: absolute;
@@ -477,7 +492,7 @@
         <div id="status-bars">
             <div class="bar-container"><div class="bar-fill exp"></div><span class="bar-label">EXP Lv.5</span></div>
             <div class="bar-container"><div class="bar-fill hp"></div><span class="bar-label">HEALTH</span></div>
-            <div class="bar-container"><div class="bar-fill energy"></div><span class="bar-label">ENERGY</span></div>
+            <div class="bar-container"><div class="bar-fill energy" id="bar-energy"></div><span class="bar-label">ENERGY</span></div>
             <div class="bar-container"><div class="bar-fill hunger"></div><span class="bar-label">HUNGER</span></div>
         </div>
     </div>
@@ -494,12 +509,18 @@
     </div>
 
     <div class="controls-right">
-        <div class="radial-actions">
+        <div class="camera-utility-row">
             <button id="btn-cam-left" class="btn cam-btn">↺</button>
             <button id="btn-cam-mode" class="btn mode-btn">🔒 FREE</button>
-            <button id="btn-action-1" class="btn action-btn">HIT 🪓</button>
             <button id="btn-cam-right" class="btn cam-btn">↻</button>
         </div>
+
+        <div class="radial-action-arc">
+            <button id="btn-action-1" class="btn action-btn">ATTACK ⚔️<span class="cost">10 Energy</span></button>
+            <button id="btn-action-2" class="btn action-btn">POWER 💥<span class="cost">25 Energy</span></button>
+            <button id="btn-action-3" class="btn action-btn">HARVEST 🪓<span class="cost">8 Energy</span></button>
+        </div>
+
         <div id="joystick-base">
             <div id="joystick-knob"></div>
         </div>
@@ -548,8 +569,7 @@
                 </div>
 
                 <div class="tab-content" id="tab-inv">
-                    <div class="inv-grid-large" id="inventory-grid">
-                        </div>
+                    <div class="inv-grid-large" id="inventory-grid"></div>
                 </div>
 
                 <div class="tab-content" id="tab-skills" style="display:none; color:#aaa; font-size:11px;">
@@ -599,8 +619,41 @@
         };
 
         try {
-            // Inventory & Item System
+            // Energy System & Inventory Data
+            const maxEnergy = 100;
+            let currentEnergy = 100;
+            const energyRegenRate = 12; // Energy per second
+
             const inventory = { wood: 0, stone: 0, berry: 0, shroom: 0 };
+
+            function updateEnergyDisplay() {
+                const bar = document.getElementById('bar-energy');
+                const pct = Math.max(0, Math.min(100, (currentEnergy / maxEnergy) * 100));
+                bar.style.width = pct + '%';
+
+                // Toggle action button states based on available energy
+                toggleButtonState('btn-action-1', currentEnergy >= 10);
+                toggleButtonState('btn-action-2', currentEnergy >= 25);
+                toggleButtonState('btn-action-3', currentEnergy >= 8);
+            }
+
+            function toggleButtonState(id, enabled) {
+                const btn = document.getElementById(id);
+                if (enabled) {
+                    btn.classList.remove('disabled');
+                } else {
+                    btn.classList.add('disabled');
+                }
+            }
+
+            function consumeEnergy(amount) {
+                if (currentEnergy >= amount) {
+                    currentEnergy -= amount;
+                    updateEnergyDisplay();
+                    return true;
+                }
+                return false;
+            }
 
             function updateInventoryUI() {
                 document.getElementById('count-wood').innerText = inventory.wood;
@@ -627,7 +680,6 @@
                     }
                 });
 
-                // Fill remaining empty slots
                 const totalSlots = 16;
                 const currentCount = invGrid.children.length;
                 for (let i = currentCount; i < totalSlots; i++) {
@@ -792,15 +844,33 @@
                 return false;
             }
 
-            function performHitAction() {
-                const hitRange = 2.0;
+            // Action System
+            function performBasicAttack() {
+                if (!consumeEnergy(10)) return;
+                // Swing animation trigger / normal attack hit range
+                triggerHit(1.8, 1);
+            }
+
+            function performPowerAttack() {
+                if (!consumeEnergy(25)) return;
+                // Heavy attack trigger with larger reach and double damage
+                triggerHit(2.6, 2);
+            }
+
+            function performHarvest() {
+                if (!consumeEnergy(8)) return;
+                // Dedicated harvesting hit
+                triggerHit(2.0, 1);
+            }
+
+            function triggerHit(rangeBonus, damageVal) {
                 for (let i = harvestables.length - 1; i >= 0; i--) {
                     const h = harvestables[i];
                     const dist = Math.hypot(playerGroup.position.x - h.x, playerGroup.position.z - h.z);
 
-                    if (dist <= (playerRadius + h.radius + hitRange)) {
-                        h.hp--;
-                        h.mesh.position.x += (Math.random() - 0.5) * 0.2;
+                    if (dist <= (playerRadius + h.radius + rangeBonus)) {
+                        h.hp -= damageVal;
+                        h.mesh.position.x += (Math.random() - 0.5) * 0.25;
 
                         if (h.hp <= 0) {
                             scene.remove(h.mesh);
@@ -831,7 +901,7 @@
             let joystickVector = { x: 0, y: 0 };
             const baseEl = document.getElementById('joystick-base');
             const knobEl = document.getElementById('joystick-knob');
-            const maxRadius = 45;
+            const maxRadius = 40;
 
             function handleJoystickMove(e) {
                 e.preventDefault();
@@ -887,7 +957,10 @@
             bindCamButton('btn-cam-left', -1);
             bindCamButton('btn-cam-right', 1);
 
-            document.getElementById('btn-action-1').onclick = performHitAction;
+            // Radial Action Buttons Bindings
+            document.getElementById('btn-action-1').onclick = performBasicAttack;
+            document.getElementById('btn-action-2').onclick = performPowerAttack;
+            document.getElementById('btn-action-3').onclick = performHarvest;
 
             // Menu Modal Control
             const menuModal = document.getElementById('menu-modal');
@@ -900,6 +973,7 @@
             };
 
             updateInventoryUI();
+            updateEnergyDisplay();
 
             // Game Loop
             const clock = new THREE.Clock();
@@ -916,6 +990,1049 @@
                 const delta = clock.getDelta();
                 const moveStep = moveSpeed * delta;
                 const rotStep = camRotateSpeed * delta;
+
+                // Energy Regeneration
+                if (currentEnergy < maxEnergy) {
+                    currentEnergy = Math.min(maxEnergy, currentEnergy + energyRegenRate * delta);
+                    updateEnergyDisplay();
+                }
+
+                if (camRotInput !== 0) {
+                    cameraAngle += camRotInput * rotStep;
+                }
+
+                const jx = joystickVector.x;
+                const jy = joystickVector.y;
+
+                if (Math.abs(jx) > 0.05 || Math.abs(jy) > 0.05) {
+                    const worldDx = (jx * Math.cos(cameraAngle) + jy * Math.sin(cameraAngle)) * moveStep;
+                    const worldDz = (-jx * Math.sin(cameraAngle) + jy * Math.cos(cameraAngle)) * moveStep;
+
+                    const nextX = playerGroup.position.x + worldDx;
+                    const nextZ = playerGroup.position.z + worldDz;
+
+                    if (!checkCollisions(nextX, playerGroup.position.z)) {
+                        playerGroup.position.x = nextX;
+                    }
+                    if (!checkCollisions(playerGroup.position.x, nextZ)) {
+                        playerGroup.position.z = nextZ;
+                    }
+
+                    const targetAngle = Math.atan2(worldDx, worldDz);
+                    playerGroup.rotation.y = targetAngle;
+
+                    if (isAutoCam && camRotInput === 0) {
+                        const desiredCamAngle = targetAngle + Math.PI;
+                        let angleDiff = desiredCamAngle - cameraAngle;
+                        angleDiff = Math.atan2(Math.sin(angleDiff), Math.cos(angleDiff));
+                        cameraAngle += angleDiff * delta * 1.5;
+                    }
+                }
+
+                updateDrops();
+
+                camera.position.x = playerGroup.position.x + Math.sin(cameraAngle) * cameraDistance;
+                camera.position.z = playerGroup.position.z + Math.cos(cameraAngle) * cameraDistance;
+                camera.position.y = playerGroup.position.y + cameraHeight;
+                camera.lookAt(playerGroup.position.x, playerGroup.position.y + 0.6, playerGroup.position.z);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>3D RPG World Prototype</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #111;
+            font-family: monospace, sans-serif;
+        }
+
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        /* --- HUD OVERLAYS (Matching Sketch 1) --- */
+        #hud-bottom-left {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            z-index: 10;
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+            pointer-events: none;
+        }
+
+        #minimap-box {
+            width: 80px;
+            height: 80px;
+            background: rgba(10, 15, 25, 0.85);
+            border: 2px solid #00ffcc;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #00ffcc;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        #status-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            width: 130px;
+            background: rgba(0,0,0,0.75);
+            padding: 6px;
+            border-radius: 6px;
+            border: 1px solid #444;
+        }
+
+        .bar-container {
+            width: 100%;
+            height: 12px;
+            background: #222;
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid #555;
+        }
+
+        .bar-fill {
+            height: 100%;
+            width: 100%;
+            transition: width 0.15s ease-out;
+        }
+
+        .bar-fill.exp { background: #00ffaa; width: 45%; }
+        .bar-fill.hp { background: #ff3344; width: 100%; }
+        .bar-fill.energy { background: #ffcc00; width: 100%; }
+        .bar-fill.hunger { background: #a66a38; width: 65%; }
+
+        .bar-label {
+            position: absolute;
+            top: 0;
+            left: 4px;
+            font-size: 8px;
+            color: #fff;
+            line-height: 12px;
+            font-weight: bold;
+            text-shadow: 1px 1px 1px #000;
+        }
+
+        .top-right-menu {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 10;
+            display: flex;
+            gap: 8px;
+        }
+
+        .menu-btn {
+            width: 44px;
+            height: 44px;
+            background: rgba(30, 30, 40, 0.85);
+            border: 2px solid #fff;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 18px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            touch-action: manipulation;
+        }
+
+        .menu-btn:active { background: #00ffcc; color: #000; }
+
+        /* Bottom Center Hotbar */
+        #hotbar {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 6px;
+            z-index: 10;
+            background: rgba(0,0,0,0.6);
+            padding: 6px;
+            border-radius: 10px;
+            border: 1px solid #555;
+        }
+
+        .hotbar-slot {
+            width: 44px;
+            height: 44px;
+            background: rgba(255,255,255,0.15);
+            border: 2px solid #aaa;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 10px;
+            position: relative;
+        }
+
+        .hotbar-slot .icon { font-size: 14px; }
+        .hotbar-slot .count {
+            position: absolute;
+            bottom: 2px;
+            right: 4px;
+            font-weight: bold;
+            color: #00ffcc;
+        }
+
+        /* --- RIGHT RADIAL CONTROL PANEL (Matching Sketch 1) --- */
+        .controls-right {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+        }
+
+        .camera-utility-row {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+
+        .radial-action-arc {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            align-items: flex-end;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.85);
+            border: 2px solid #fff;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 11px;
+            color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            outline: none;
+            touch-action: manipulation;
+        }
+
+        .action-btn {
+            width: 60px;
+            height: 42px;
+            border-radius: 20px;
+            background: #ffaa00;
+            color: #000;
+            font-size: 10px;
+            border: 2px solid #fff;
+            display: flex;
+            flex-direction: column;
+            line-height: 1.1;
+            transition: opacity 0.2s, background 0.1s;
+        }
+
+        .action-btn:active { background: #00ffcc; }
+        .action-btn.disabled {
+            opacity: 0.4;
+            background: #555 !important;
+            border-color: #888 !important;
+            color: #aaa !important;
+        }
+
+        .action-btn .cost {
+            font-size: 8px;
+            color: #333;
+            font-weight: normal;
+        }
+
+        .cam-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            font-size: 14px;
+        }
+
+        .mode-btn {
+            height: 38px;
+            padding: 0 8px;
+            border-radius: 18px;
+            font-size: 10px;
+            background: rgba(0, 255, 204, 0.85);
+        }
+
+        /* Joystick Base & Knob */
+        #joystick-base {
+            width: 110px;
+            height: 110px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            position: relative;
+            touch-action: none;
+            margin-top: 4px;
+        }
+
+        #joystick-knob {
+            width: 46px;
+            height: 46px;
+            background: rgba(0, 255, 204, 0.85);
+            border: 2px solid #fff;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+
+        /* --- FULL MENU INTERFACE (Matching Sketch 2) --- */
+        #menu-modal {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 92vw;
+            height: 85vh;
+            max-width: 750px;
+            max-height: 500px;
+            background: rgba(18, 22, 32, 0.96);
+            border: 2px solid #00ffcc;
+            border-radius: 12px;
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.3);
+        }
+
+        .menu-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(10, 14, 22, 0.9);
+            padding: 8px 16px;
+            border-bottom: 2px solid #334455;
+        }
+
+        .menu-header h2 {
+            margin: 0;
+            color: #00ffcc;
+            font-size: 15px;
+            letter-spacing: 1px;
+        }
+
+        .close-btn {
+            background: #ff4444;
+            color: #fff;
+            border: none;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .menu-body {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .equipment-panel {
+            width: 48%;
+            background: rgba(255, 255, 255, 0.03);
+            border-right: 2px solid #334455;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .paperdoll-container {
+            display: grid;
+            grid-template-columns: 50px 1fr 50px;
+            gap: 8px;
+            width: 100%;
+            height: 100%;
+            align-items: center;
+        }
+
+        .equip-column {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            justify-content: center;
+        }
+
+        .equip-slot {
+            width: 48px;
+            height: 48px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid #667788;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .equip-slot .slot-label {
+            font-size: 7px;
+            color: #8899aa;
+            position: absolute;
+            top: 2px;
+            left: 3px;
+        }
+
+        .equip-slot .item-icon { font-size: 18px; }
+
+        .character-avatar-box {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid #445566;
+            border-radius: 8px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #00ffcc;
+            font-size: 11px;
+            text-align: center;
+        }
+
+        .avatar-placeholder { font-size: 50px; margin-bottom: 5px; }
+
+        .inventory-panel {
+            width: 52%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tab-bar {
+            display: flex;
+            background: rgba(10, 14, 22, 0.8);
+            border-bottom: 1px solid #334455;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 8px 4px;
+            background: transparent;
+            border: none;
+            color: #8899aa;
+            font-size: 13px;
+            text-align: center;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab-btn.active {
+            color: #00ffcc;
+            border-bottom: 2px solid #00ffcc;
+            background: rgba(0, 255, 204, 0.1);
+        }
+
+        .tab-content {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+        }
+
+        .inv-grid-large {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+        }
+
+        .inv-item-slot {
+            aspect-ratio: 1;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid #556677;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 10px;
+            position: relative;
+        }
+
+        .inv-item-slot .qty {
+            position: absolute;
+            bottom: 2px;
+            right: 4px;
+            font-size: 9px;
+            color: #00ffcc;
+            font-weight: bold;
+        }
+
+        .skill-item {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid #445566;
+            border-radius: 6px;
+            padding: 8px;
+            margin-bottom: 6px;
+        }
+
+        .skill-item b { color: #00ffcc; font-size: 12px; }
+
+        #mobile-log {
+            position: absolute;
+            top: 45px;
+            left: 10px;
+            right: 10px;
+            color: #ff5555;
+            background: rgba(0,0,0,0.85);
+            padding: 6px;
+            font-size: 10px;
+            z-index: 100;
+            display: none;
+            border-radius: 4px;
+            max-height: 80px;
+            overflow-y: auto;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+    <div id="mobile-log"></div>
+    <div id="canvas-container"></div>
+
+    <div id="hud-bottom-left">
+        <div id="minimap-box">MAP</div>
+        <div id="status-bars">
+            <div class="bar-container"><div class="bar-fill exp"></div><span class="bar-label">EXP Lv.5</span></div>
+            <div class="bar-container"><div class="bar-fill hp"></div><span class="bar-label">HEALTH</span></div>
+            <div class="bar-container"><div class="bar-fill energy" id="bar-energy"></div><span class="bar-label">ENERGY</span></div>
+            <div class="bar-container"><div class="bar-fill hunger"></div><span class="bar-label">HUNGER</span></div>
+        </div>
+    </div>
+
+    <div class="top-right-menu">
+        <button id="btn-menu-open" class="menu-btn">🎒</button>
+    </div>
+
+    <div id="hotbar">
+        <div class="hotbar-slot"><span class="icon">🪵</span><span class="count" id="count-wood">0</span></div>
+        <div class="hotbar-slot"><span class="icon">🪨</span><span class="count" id="count-stone">0</span></div>
+        <div class="hotbar-slot"><span class="icon">🫐</span><span class="count" id="count-berry">0</span></div>
+        <div class="hotbar-slot"><span class="icon">🍄</span><span class="count" id="count-shroom">0</span></div>
+    </div>
+
+    <div class="controls-right">
+        <div class="camera-utility-row">
+            <button id="btn-cam-left" class="btn cam-btn">↺</button>
+            <button id="btn-cam-mode" class="btn mode-btn">🔒 FREE</button>
+            <button id="btn-cam-right" class="btn cam-btn">↻</button>
+        </div>
+
+        <div class="radial-action-arc">
+            <button id="btn-action-1" class="btn action-btn">ATTACK ⚔️<span class="cost">10 Energy</span></button>
+            <button id="btn-action-2" class="btn action-btn">POWER 💥<span class="cost">25 Energy</span></button>
+            <button id="btn-action-3" class="btn action-btn">HARVEST 🪓<span class="cost">8 Energy</span></button>
+        </div>
+
+        <div id="joystick-base">
+            <div id="joystick-knob"></div>
+        </div>
+    </div>
+
+    <div id="menu-modal">
+        <div class="menu-header">
+            <h2>MY EQUIPMENT & INVENTORY</h2>
+            <button id="btn-menu-close" class="close-btn">✕ CLOSE</button>
+        </div>
+        <div class="menu-body">
+            
+            <div class="equipment-panel">
+                <div class="paperdoll-container">
+                    <div class="equip-column">
+                        <div class="equip-slot"><span class="slot-label">MAIN</span><span class="item-icon">🪓</span></div>
+                        <div class="equip-slot"><span class="slot-label">HEAD</span></div>
+                        <div class="equip-slot"><span class="slot-label">FACE</span></div>
+                        <div class="equip-slot"><span class="slot-label">BACK</span></div>
+                        <div class="equip-slot"><span class="slot-label">EXTRA</span></div>
+                    </div>
+
+                    <div class="character-avatar-box">
+                        <div class="avatar-placeholder">🧍</div>
+                        <b>Generic Character</b>
+                        <span style="font-size:9px; color:#888; margin-top:4px;">Lv. 5 Adventurer</span>
+                    </div>
+
+                    <div class="equip-column">
+                        <div class="equip-slot"><span class="slot-label">OFFHAND</span></div>
+                        <div class="equip-slot"><span class="slot-label">TORSO</span><span class="item-icon">🛡️</span></div>
+                        <div class="equip-slot"><span class="slot-label">WRIST</span></div>
+                        <div class="equip-slot"><span class="slot-label">LEGS</span></div>
+                        <div class="equip-slot"><span class="slot-label">FEET</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="inventory-panel">
+                <div class="tab-bar">
+                    <button class="tab-btn active" onclick="switchTab('inv')">🎒</button>
+                    <button class="tab-btn" onclick="switchTab('skills')">⚡</button>
+                    <button class="tab-btn" onclick="switchTab('quests')">📜</button>
+                    <button class="tab-btn" onclick="switchTab('options')">⚙️</button>
+                    <button class="tab-btn" onclick="switchTab('journal')">📖</button>
+                </div>
+
+                <div class="tab-content" id="tab-inv">
+                    <div class="inv-grid-large" id="inventory-grid"></div>
+                </div>
+
+                <div class="tab-content" id="tab-skills" style="display:none; color:#aaa; font-size:11px;">
+                    <div class="skill-item">
+                        <b>🪵 Lumberjack (Passive - Lv.2)</b>
+                        <div style="font-size:9px; color:#8899aa; margin-top:2px;">Chopping trees grants +10% yield and reduces stamina cost.</div>
+                    </div>
+                    <div class="skill-item">
+                        <b>🪨 Mining Master (Passive - Lv.1)</b>
+                        <div style="font-size:9px; color:#8899aa; margin-top:2px;">Increases stone gathering rate by +15%.</div>
+                    </div>
+                    <div class="skill-item">
+                        <b>🏃 Swift Foot (Passive - Lv.3)</b>
+                        <div style="font-size:9px; color:#8899aa; margin-top:2px;">Base movement speed increased by +8%.</div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab-quests" style="display:none; color:#aaa; font-size:11px;">
+                    <p><b>Active Quests</b></p>
+                    <p>• Gather 5 Wood logs<br>• Harvest 3 Berries</p>
+                </div>
+
+                <div class="tab-content" id="tab-options" style="display:none; color:#aaa; font-size:11px;">
+                    <p><b>Game Options</b></p>
+                    <p>Audio: 100%<br>Graphics: Medium</p>
+                </div>
+
+                <div class="tab-content" id="tab-journal" style="display:none; color:#aaa; font-size:11px;">
+                    <p><b>World Lore</b></p>
+                    <p>Discovered: The Great Whispering Forest.</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function showMobileError(msg) {
+            const logEl = document.getElementById('mobile-log');
+            logEl.style.display = 'block';
+            logEl.innerText += '[ERR] ' + msg + '\n';
+        }
+
+        window.onerror = function(msg, url, lineNo) {
+            showMobileError(msg + " (line " + lineNo + ")");
+            return false;
+        };
+
+        try {
+            // Energy System & Inventory Data
+            const maxEnergy = 100;
+            let currentEnergy = 100;
+            const energyRegenRate = 12; // Energy per second
+
+            const inventory = { wood: 0, stone: 0, berry: 0, shroom: 0 };
+
+            function updateEnergyDisplay() {
+                const bar = document.getElementById('bar-energy');
+                const pct = Math.max(0, Math.min(100, (currentEnergy / maxEnergy) * 100));
+                bar.style.width = pct + '%';
+
+                // Toggle action button states based on available energy
+                toggleButtonState('btn-action-1', currentEnergy >= 10);
+                toggleButtonState('btn-action-2', currentEnergy >= 25);
+                toggleButtonState('btn-action-3', currentEnergy >= 8);
+            }
+
+            function toggleButtonState(id, enabled) {
+                const btn = document.getElementById(id);
+                if (enabled) {
+                    btn.classList.remove('disabled');
+                } else {
+                    btn.classList.add('disabled');
+                }
+            }
+
+            function consumeEnergy(amount) {
+                if (currentEnergy >= amount) {
+                    currentEnergy -= amount;
+                    updateEnergyDisplay();
+                    return true;
+                }
+                return false;
+            }
+
+            function updateInventoryUI() {
+                document.getElementById('count-wood').innerText = inventory.wood;
+                document.getElementById('count-stone').innerText = inventory.stone;
+                document.getElementById('count-berry').innerText = inventory.berry;
+                document.getElementById('count-shroom').innerText = inventory.shroom;
+
+                const invGrid = document.getElementById('inventory-grid');
+                invGrid.innerHTML = '';
+
+                const items = [
+                    { icon: '🪵', name: 'Wood', count: inventory.wood },
+                    { icon: '🪨', name: 'Stone', count: inventory.stone },
+                    { icon: '🫐', name: 'Berry', count: inventory.berry },
+                    { icon: '🍄', name: 'Shroom', count: inventory.shroom }
+                ];
+
+                items.forEach(item => {
+                    if (item.count > 0) {
+                        const slot = document.createElement('div');
+                        slot.className = 'inv-item-slot';
+                        slot.innerHTML = `<span style="font-size:16px;">${item.icon}</span><span class="qty">${item.count}</span>`;
+                        invGrid.appendChild(slot);
+                    }
+                });
+
+                const totalSlots = 16;
+                const currentCount = invGrid.children.length;
+                for (let i = currentCount; i < totalSlots; i++) {
+                    const slot = document.createElement('div');
+                    slot.className = 'inv-item-slot';
+                    slot.style.opacity = '0.3';
+                    invGrid.appendChild(slot);
+                }
+            }
+
+            // Tab Switcher
+            window.switchTab = function(tabName) {
+                const tabs = ['inv', 'skills', 'quests', 'options', 'journal'];
+                tabs.forEach((t, index) => {
+                    const content = document.getElementById(`tab-${t}`);
+                    if (content) content.style.display = (t === tabName) ? 'block' : 'none';
+                    
+                    const btn = document.querySelectorAll('.tab-btn')[index];
+                    if (btn) {
+                        if (t === tabName) btn.classList.add('active');
+                        else btn.classList.remove('active');
+                    }
+                });
+            };
+
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a1a24);
+
+            const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 10, 14);
+            camera.lookAt(0, 0, 0);
+
+            const renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
+            dirLight.position.set(20, 40, 20);
+            scene.add(dirLight);
+
+            const WORLD_SIZE = 120;
+            const HALF_WORLD = WORLD_SIZE / 2;
+
+            const grid = new THREE.GridHelper(WORLD_SIZE, 60, 0x00ffcc, 0x334433);
+            scene.add(grid);
+
+            const ground = new THREE.Mesh(
+                new THREE.PlaneGeometry(WORLD_SIZE, WORLD_SIZE),
+                new THREE.MeshStandardMaterial({ color: 0x182e18 })
+            );
+            ground.rotation.x = -Math.PI / 2;
+            scene.add(ground);
+
+            const playerRadius = 0.6;
+            const playerGroup = new THREE.Group();
+
+            const playerCube = new THREE.Mesh(
+                new THREE.BoxGeometry(1.2, 1.2, 1.2),
+                new THREE.MeshStandardMaterial({ color: 0x3388ff })
+            );
+            playerCube.position.y = 0.6;
+            playerGroup.add(playerCube);
+
+            const playerPointer = new THREE.Mesh(
+                new THREE.BoxGeometry(0.3, 0.3, 0.3),
+                new THREE.MeshStandardMaterial({ color: 0xff3333 })
+            );
+            playerPointer.position.set(0, 0.6, -0.7);
+            playerGroup.add(playerPointer);
+
+            scene.add(playerGroup);
+
+            const harvestables = [];
+            const droppedItems = [];
+
+            function createTree(x, z) {
+                const group = new THREE.Group();
+                const trunk = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.2, 0.3, 1),
+                    new THREE.MeshStandardMaterial({ color: 0x5c4033 })
+                );
+                trunk.position.y = 0.5;
+                group.add(trunk);
+
+                const leaves = new THREE.Mesh(
+                    new THREE.ConeGeometry(1.2, 2.5, 6),
+                    new THREE.MeshStandardMaterial({ color: 0x2e8b57 })
+                );
+                leaves.position.y = 2.0;
+                group.add(leaves);
+
+                group.position.set(x, 0, z);
+                scene.add(group);
+
+                harvestables.push({ mesh: group, type: 'tree', dropType: 'wood', hp: 3, x: x, z: z, radius: 0.9 });
+            }
+
+            function createBoulder(x, z) {
+                const rock = new THREE.Mesh(
+                    new THREE.DodecahedronGeometry(1, 1),
+                    new THREE.MeshStandardMaterial({ color: 0x777788, flatShading: true })
+                );
+                rock.position.set(x, 0.7, z);
+                scene.add(rock);
+
+                harvestables.push({ mesh: rock, type: 'boulder', dropType: 'stone', hp: 4, x: x, z: z, radius: 1.0 });
+            }
+
+            function createBush(x, z) {
+                const bush = new THREE.Mesh(
+                    new THREE.IcosahedronGeometry(0.8, 1),
+                    new THREE.MeshStandardMaterial({ color: 0x3a9d23, flatShading: true })
+                );
+                bush.position.set(x, 0.5, z);
+                scene.add(bush);
+
+                harvestables.push({ mesh: bush, type: 'bush', dropType: 'berry', hp: 2, x: x, z: z, radius: 0.7 });
+            }
+
+            function spawnDrop(x, z, itemType) {
+                let color = 0x8b5a2b;
+                if (itemType === 'stone') color = 0xaaaaaa;
+                if (itemType === 'berry') color = 0xff0055;
+
+                const dropMesh = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.4, 0.4, 0.4),
+                    new THREE.MeshStandardMaterial({ color: color })
+                );
+                dropMesh.position.set(x, 0.2, z);
+                scene.add(dropMesh);
+
+                droppedItems.push({ mesh: dropMesh, type: itemType, x: x, z: z });
+            }
+
+            function populateNodes() {
+                for (let i = 0; i < 40; i++) {
+                    const x = (Math.random() - 0.5) * (WORLD_SIZE - 15);
+                    const z = (Math.random() - 0.5) * (WORLD_SIZE - 15);
+                    if (Math.hypot(x, z) < 6) continue;
+
+                    const r = Math.random();
+                    if (r < 0.5) createTree(x, z);
+                    else if (r < 0.8) createBoulder(x, z);
+                    else createBush(x, z);
+                }
+            }
+            populateNodes();
+
+            function checkCollisions(targetX, targetZ) {
+                const boundaryLimit = HALF_WORLD - 1.0;
+                if (Math.abs(targetX) > boundaryLimit || Math.abs(targetZ) > boundaryLimit) return true;
+
+                for (let h of harvestables) {
+                    if (Math.hypot(targetX - h.x, targetZ - h.z) < (playerRadius + h.radius)) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            // Action System
+            function performBasicAttack() {
+                if (!consumeEnergy(10)) return;
+                // Swing animation trigger / normal attack hit range
+                triggerHit(1.8, 1);
+            }
+
+            function performPowerAttack() {
+                if (!consumeEnergy(25)) return;
+                // Heavy attack trigger with larger reach and double damage
+                triggerHit(2.6, 2);
+            }
+
+            function performHarvest() {
+                if (!consumeEnergy(8)) return;
+                // Dedicated harvesting hit
+                triggerHit(2.0, 1);
+            }
+
+            function triggerHit(rangeBonus, damageVal) {
+                for (let i = harvestables.length - 1; i >= 0; i--) {
+                    const h = harvestables[i];
+                    const dist = Math.hypot(playerGroup.position.x - h.x, playerGroup.position.z - h.z);
+
+                    if (dist <= (playerRadius + h.radius + rangeBonus)) {
+                        h.hp -= damageVal;
+                        h.mesh.position.x += (Math.random() - 0.5) * 0.25;
+
+                        if (h.hp <= 0) {
+                            scene.remove(h.mesh);
+                            spawnDrop(h.x, h.z, h.dropType);
+                            harvestables.splice(i, 1);
+                        }
+                        return;
+                    }
+                }
+            }
+
+            function updateDrops() {
+                for (let i = droppedItems.length - 1; i >= 0; i--) {
+                    const item = droppedItems[i];
+                    const dist = Math.hypot(playerGroup.position.x - item.x, playerGroup.position.z - item.z);
+
+                    if (dist < 1.5) {
+                        inventory[item.type] = (inventory[item.type] || 0) + 1;
+                        updateInventoryUI();
+
+                        scene.remove(item.mesh);
+                        droppedItems.splice(i, 1);
+                    }
+                }
+            }
+
+            // Virtual Joystick Logic
+            let joystickVector = { x: 0, y: 0 };
+            const baseEl = document.getElementById('joystick-base');
+            const knobEl = document.getElementById('joystick-knob');
+            const maxRadius = 40;
+
+            function handleJoystickMove(e) {
+                e.preventDefault();
+                const touch = e.touches ? e.touches[0] : e;
+                const rect = baseEl.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+
+                let dx = touch.clientX - centerX;
+                let dy = touch.clientY - centerY;
+                const dist = Math.hypot(dx, dy);
+
+                if (dist > maxRadius) {
+                    dx = (dx / dist) * maxRadius;
+                    dy = (dy / dist) * maxRadius;
+                }
+
+                knobEl.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+                
+                if (dist < 6) {
+                    joystickVector = { x: 0, y: 0 };
+                } else {
+                    joystickVector = { x: dx / maxRadius, y: dy / maxRadius };
+                }
+            }
+
+            function resetJoystick(e) {
+                if (e) e.preventDefault();
+                knobEl.style.transform = `translate(-50%, -50%)`;
+                joystickVector = { x: 0, y: 0 };
+            }
+
+            baseEl.addEventListener('touchstart', handleJoystickMove, { passive: false });
+            baseEl.addEventListener('touchmove', handleJoystickMove, { passive: false });
+            baseEl.addEventListener('touchend', resetJoystick, { passive: false });
+            baseEl.addEventListener('touchcancel', resetJoystick, { passive: false });
+
+            // Camera Toggle
+            let isAutoCam = false;
+            const camModeBtn = document.getElementById('btn-cam-mode');
+            camModeBtn.onclick = () => {
+                isAutoCam = !isAutoCam;
+                camModeBtn.innerText = isAutoCam ? '🎥 AUTO' : '🔒 FREE';
+                camModeBtn.style.background = isAutoCam ? '#ffaa00' : 'rgba(0, 255, 204, 0.85)';
+            };
+
+            let camRotInput = 0;
+            function bindCamButton(id, val) {
+                const btn = document.getElementById(id);
+                btn.addEventListener('touchstart', (e) => { e.preventDefault(); camRotInput = val; }, { passive: false });
+                btn.addEventListener('touchend', (e) => { e.preventDefault(); camRotInput = 0; }, { passive: false });
+            }
+            bindCamButton('btn-cam-left', -1);
+            bindCamButton('btn-cam-right', 1);
+
+            // Radial Action Buttons Bindings
+            document.getElementById('btn-action-1').onclick = performBasicAttack;
+            document.getElementById('btn-action-2').onclick = performPowerAttack;
+            document.getElementById('btn-action-3').onclick = performHarvest;
+
+            // Menu Modal Control
+            const menuModal = document.getElementById('menu-modal');
+            document.getElementById('btn-menu-open').onclick = () => {
+                updateInventoryUI();
+                menuModal.style.display = 'flex';
+            };
+            document.getElementById('btn-menu-close').onclick = () => {
+                menuModal.style.display = 'none';
+            };
+
+            updateInventoryUI();
+            updateEnergyDisplay();
+
+            // Game Loop
+            const clock = new THREE.Clock();
+            const moveSpeed = 8;
+            const camRotateSpeed = 2.0;
+
+            let cameraAngle = 0;
+            const cameraDistance = 14;
+            const cameraHeight = 10;
+
+            function animate() {
+                requestAnimationFrame(animate);
+
+                const delta = clock.getDelta();
+                const moveStep = moveSpeed * delta;
+                const rotStep = camRotateSpeed * delta;
+
+                // Energy Regeneration
+                if (currentEnergy < maxEnergy) {
+                    currentEnergy = Math.min(maxEnergy, currentEnergy + energyRegenRate * delta);
+                    updateEnergyDisplay();
+                }
 
                 if (camRotInput !== 0) {
                     cameraAngle += camRotInput * rotStep;
