@@ -6,35 +6,319 @@
     <title>3D Mechanical Hub Prototype</title>
     
     <style>
-        * {
-            user-select: none;
-            -webkit-user-select: none;
-            -webkit-touch-callout: none;
-            touch-action: none;
-        }
-
-        body { 
-            margin: 0; 
+        html, body {
+            margin: 0;
             padding: 0;
-            overflow: hidden; 
-            background-color: #000;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000000;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
         }
 
-        #game-canvas { 
-            width: 100vw; 
-            height: 100vh; 
-            display: block; 
+        #game-canvas {
             position: absolute;
-            top: 0; 
+            top: 0;
             left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: block;
             z-index: 1;
         }
 
         #debug-hud {
             position: absolute;
-            top: 15px;
-            left: 15px;
+            top: 12px;
+            left: 12px;
             color: #ffffff;
+            font-family: monospace;
+            font-size: 13px;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 10px 14px;
+            border-radius: 6px;
+            z-index: 10000;
+            pointer-events: none;
+            line-height: 1.4;
+            border: 1px solid #444444;
+        }
+
+        .ui-container {
+            position: absolute;
+            bottom: 25px;
+            z-index: 10000;
+        }
+
+        #dpad-container {
+            left: 20px;
+            width: 135px;
+            height: 135px;
+            display: grid;
+            grid-template-columns: 43px 43px 43px;
+            grid-template-rows: 43px 43px 43px;
+            gap: 3px;
+        }
+
+        #cam-container {
+            right: 20px;
+            width: 115px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        button.ui-btn {
+            background-color: rgba(255, 255, 255, 0.7);
+            border: 2px solid #ffffff;
+            border-radius: 8px;
+            color: #000000;
+            font-weight: bold;
+            font-size: 13px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
+            outline: none;
+            touch-action: none;
+            -webkit-tap-highlight-color: transparent;
+            cursor: pointer;
+            padding: 0;
+            margin: 0;
+        }
+
+        button.ui-btn:active, button.ui-btn.pressed {
+            background-color: #00ffcc !important;
+        }
+
+        .cam-btn {
+            width: 52px;
+            height: 52px;
+            border-radius: 50% !important;
+        }
+
+        #btn-up { grid-column: 2; grid-row: 1; }
+        #btn-down { grid-column: 2; grid-row: 3; }
+        #btn-left { grid-column: 1; grid-row: 2; }
+        #btn-right { grid-column: 3; grid-row: 2; }
+    </style>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+    <div id="debug-hud">Booting system...</div>
+    <div id="game-canvas"></div>
+
+    <div id="dpad-container" class="ui-container">
+        <button id="btn-up" class="ui-btn" type="button">UP</button>
+        <button id="btn-left" class="ui-btn" type="button">LFT</button>
+        <button id="btn-right" class="ui-btn" type="button">RGT</button>
+        <button id="btn-down" class="ui-btn" type="button">DWN</button>
+    </div>
+
+    <div id="cam-container" class="ui-container">
+        <button id="btn-cam-left" class="ui-btn cam-btn" type="button">↺</button>
+        <button id="btn-cam-right" class="ui-btn cam-btn" type="button">↻</button>
+    </div>
+
+    <script>
+        // 0. TOP-LEVEL ERROR CATCHER
+        const debugHud = document.getElementById('debug-hud');
+        window.onerror = function(msg, url, lineNo) {
+            debugHud.style.color = '#ff5555';
+            debugHud.innerHTML = 'CRITICAL ERROR:<br>' + msg + '<br>Line: ' + lineNo;
+            return false;
+        };
+
+        // 1. THREE.JS INITIALIZATION
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x111118);
+
+        const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+        let renderer;
+        try {
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById('game-canvas').appendChild(renderer.domElement);
+        } catch (err) {
+            debugHud.style.color = '#ff5555';
+            debugHud.innerHTML = 'WebGL Error: ' + err.message;
+        }
+
+        const clock = new THREE.Clock();
+
+        // 2. LIGHTS & ENVIRONMENT
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+        scene.add(ambientLight);
+        
+        const sunLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        sunLight.position.set(10, 20, 10);
+        scene.add(sunLight);
+
+        // Ground Mesh
+        const ground = new THREE.Mesh(
+            new THREE.PlaneGeometry(100, 100),
+            new THREE.MeshStandardMaterial({ color: 0x1f3a1f })
+        );
+        ground.rotation.x = -Math.PI / 2;
+        scene.add(ground);
+
+        // Visual Grid Helper
+        const grid = new THREE.GridHelper(100, 50, 0x00ffcc, 0x226644);
+        grid.position.y = 0.02;
+        scene.add(grid);
+
+        // Player Group
+        const playerGroup = new THREE.Group();
+
+        const playerCube = new THREE.Mesh(
+            new THREE.BoxGeometry(1.2, 1.2, 1.2),
+            new THREE.MeshStandardMaterial({ color: 0x3388ff })
+        );
+        playerCube.position.y = 0.6;
+        playerGroup.add(playerCube);
+
+        const playerPointer = new THREE.Mesh(
+            new THREE.BoxGeometry(0.4, 0.4, 0.4),
+            new THREE.MeshStandardMaterial({ color: 0xff3333 })
+        );
+        playerPointer.position.set(0, 0.6, -0.7);
+        playerGroup.add(playerPointer);
+
+        scene.add(playerGroup);
+
+        // Conical Obstacles
+        const treeGeo = new THREE.ConeGeometry(0.8, 3, 8);
+        const treeMat = new THREE.MeshStandardMaterial({ color: 0xffaa00 });
+        const treePositions = [{x:-5, z:-5}, {x:5, z:-5}, {x:-5, z:5}, {x:5, z:5}, {x:0, z:-10}];
+
+        treePositions.forEach(pos => {
+            const tree = new THREE.Mesh(treeGeo, treeMat);
+            tree.position.set(pos.x, 1.5, pos.z);
+            scene.add(tree);
+        });
+
+        // 3. STATE & INPUTS
+        const moveSpeedUnits = 10;
+        const rotateSpeedUnits = 2.5;
+        let cameraAngle = 0;
+        const cameraDistance = 14;
+        const cameraHeight = 10;
+
+        const dirs = {
+            up: false, down: false, left: false, right: false,
+            camLeft: false, camRight: false
+        };
+
+        function renderHUDText() {
+            const active = Object.keys(dirs).filter(k => dirs[k]);
+            debugHud.innerHTML = 
+                'Status: ACTIVE<br>' +
+                'Input: ' + (active.length ? active.join(', ').toUpperCase() : 'IDLE') + '<br>' +
+                'X: ' + playerGroup.position.x.toFixed(1) + ' | Z: ' + playerGroup.position.z.toFixed(1);
+        }
+
+        // 4. RELIABLE BUTTON BINDINGS
+        function bindButton(id, dirKey) {
+            const btn = document.getElementById(id);
+
+            const handleDown = (e) => {
+                if (e && e.cancelable) e.preventDefault();
+                dirs[dirKey] = true;
+                btn.classList.add('pressed');
+                renderHUDText();
+            };
+
+            const handleUp = (e) => {
+                if (e && e.cancelable) e.preventDefault();
+                dirs[dirKey] = false;
+                btn.classList.remove('pressed');
+                renderHUDText();
+            };
+
+            btn.addEventListener('pointerdown', handleDown, { passive: false });
+            btn.addEventListener('pointerup', handleUp, { passive: false });
+            btn.addEventListener('pointercancel', handleUp, { passive: false });
+            btn.addEventListener('pointerleave', handleUp, { passive: false });
+
+            btn.addEventListener('contextmenu', (e) => e.preventDefault());
+        }
+
+        bindButton('btn-up', 'up');
+        bindButton('btn-down', 'down');
+        bindButton('btn-left', 'left');
+        bindButton('btn-right', 'right');
+        bindButton('btn-cam-left', 'camLeft');
+        bindButton('btn-cam-right', 'camRight');
+
+        renderHUDText();
+
+        // 5. GAME LOOP
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const delta = clock.getDelta();
+            const speed = moveSpeedUnits * delta;
+            const rotateSpeed = rotateSpeedUnits * delta;
+
+            if (dirs.camLeft) cameraAngle -= rotateSpeed;
+            if (dirs.camRight) cameraAngle += rotateSpeed;
+
+            let moveX = 0;
+            let moveZ = 0;
+
+            if (dirs.up) {
+                moveX -= Math.sin(cameraAngle) * speed;
+                moveZ -= Math.cos(cameraAngle) * speed;
+            }
+            if (dirs.down) {
+                moveX += Math.sin(cameraAngle) * speed;
+                moveZ += Math.cos(cameraAngle) * speed;
+            }
+            if (dirs.left) {
+                moveX -= Math.cos(cameraAngle) * speed;
+                moveZ += Math.sin(cameraAngle) * speed;
+            }
+            if (dirs.right) {
+                moveX += Math.cos(cameraAngle) * speed;
+                moveZ -= Math.sin(cameraAngle) * speed;
+            }
+
+            if (moveX !== 0 || moveZ !== 0) {
+                playerGroup.position.x += moveX;
+                playerGroup.position.z += moveZ;
+
+                const heading = Math.atan2(moveX, moveZ);
+                playerGroup.rotation.y = heading + Math.PI;
+
+                renderHUDText();
+            }
+
+            camera.position.x = playerGroup.position.x + Math.sin(cameraAngle) * cameraDistance;
+            camera.position.z = playerGroup.position.z + Math.cos(cameraAngle) * cameraDistance;
+            camera.position.y = playerGroup.position.y + cameraHeight;
+
+            camera.lookAt(playerGroup.position.x, playerGroup.position.y, playerGroup.position.z);
+
+            if (renderer) {
+                renderer.render(scene, camera);
+            }
+        }
+
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            if (renderer) {
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+        });
+    </script>
+</body>
+</html>            color: #ffffff;
             font-family: monospace;
             font-size: 13px;
             background: rgba(0, 0, 0, 0.85);
