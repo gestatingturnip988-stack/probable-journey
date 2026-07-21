@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3D World Mobile</title>
+    <title>3D RPG World Prototype</title>
     <style>
         * {
             box-sizing: border-box;
@@ -19,7 +19,7 @@
             height: 100%;
             overflow: hidden;
             background-color: #111;
-            font-family: sans-serif;
+            font-family: monospace, sans-serif;
         }
 
         #canvas-container {
@@ -31,18 +31,212 @@
             z-index: 1;
         }
 
-        #hud {
+        /* --- UI OVERLAYS --- */
+        #hud-top-left {
             position: absolute;
             top: 10px;
             left: 10px;
             color: #fff;
-            background: rgba(0,0,0,0.7);
+            background: rgba(0,0,0,0.75);
             padding: 8px 12px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-family: monospace;
+            border-radius: 6px;
+            font-size: 11px;
             z-index: 10;
+            border: 1px solid #444;
             pointer-events: none;
+        }
+
+        .top-right-menu {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .menu-btn {
+            width: 44px;
+            height: 44px;
+            background: rgba(30, 30, 40, 0.85);
+            border: 2px solid #fff;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 18px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            touch-action: manipulation;
+        }
+
+        .menu-btn:active { background: #00ffcc; color: #000; }
+
+        /* Bottom Center Hotbar */
+        #hotbar {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 6px;
+            z-index: 10;
+            background: rgba(0,0,0,0.6);
+            padding: 6px;
+            border-radius: 10px;
+            border: 1px solid #555;
+        }
+
+        .hotbar-slot {
+            width: 44px;
+            height: 44px;
+            background: rgba(255,255,255,0.15);
+            border: 2px solid #aaa;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 10px;
+            position: relative;
+        }
+
+        .hotbar-slot .icon { font-size: 14px; }
+        .hotbar-slot .count {
+            position: absolute;
+            bottom: 2px;
+            right: 4px;
+            font-weight: bold;
+            color: #00ffcc;
+        }
+
+        /* --- RIGHT CONTROL PANEL (Actions, Camera, Joystick) --- */
+        .controls-right {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .radial-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.85);
+            border: 2px solid #fff;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 12px;
+            color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            outline: none;
+            touch-action: manipulation;
+        }
+
+        .action-btn {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: #ffaa00;
+            color: #000;
+            font-size: 11px;
+            border: 2px solid #fff;
+        }
+
+        .cam-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            font-size: 14px;
+        }
+
+        .btn:active { background: #00ffcc !important; }
+
+        /* Virtual Joystick Base & Knob */
+        #joystick-base {
+            width: 110px;
+            height: 110px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            position: relative;
+            touch-action: none;
+        }
+
+        #joystick-knob {
+            width: 46px;
+            height: 46px;
+            background: rgba(0, 255, 204, 0.8);
+            border: 2px solid #fff;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+
+        /* Inventory Window Modal */
+        #inventory-modal {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80vw;
+            max-width: 320px;
+            background: rgba(20, 20, 30, 0.95);
+            border: 2px solid #00ffcc;
+            border-radius: 12px;
+            padding: 15px;
+            color: #fff;
+            z-index: 100;
+            display: none;
+        }
+
+        #inventory-modal h3 {
+            margin: 0 0 10px 0;
+            text-align: center;
+            color: #00ffcc;
+            font-size: 14px;
+        }
+
+        .inv-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .inv-slot {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid #666;
+            height: 55px;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+        }
+
+        #close-inv-btn {
+            width: 100%;
+            padding: 8px;
+            background: #ff4444;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
         }
 
         #mobile-log {
@@ -54,92 +248,58 @@
             background: rgba(0,0,0,0.85);
             padding: 6px;
             font-size: 10px;
-            font-family: monospace;
             z-index: 100;
             display: none;
             border-radius: 4px;
             max-height: 80px;
             overflow-y: auto;
         }
-
-        .controls {
-            position: absolute;
-            bottom: 20px;
-            z-index: 10;
-            display: flex;
-            gap: 15px;
-        }
-
-        .controls-left { left: 15px; }
-        .controls-right { right: 15px; }
-
-        #dpad {
-            display: grid;
-            grid-template-columns: repeat(3, 45px);
-            grid-template-rows: repeat(3, 45px);
-            gap: 5px;
-        }
-
-        #cam-controls {
-            display: flex;
-            gap: 8px;
-            align-self: flex-end;
-        }
-
-        .btn {
-            background: rgba(255, 255, 255, 0.85);
-            border: 2px solid #fff;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 13px;
-            color: #000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            outline: none;
-            touch-action: manipulation;
-        }
-
-        .cam-btn {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            font-size: 16px;
-        }
-
-        .btn:active { background: #00ffcc; }
-
-        #btn-up    { grid-column: 2; grid-row: 1; }
-        #btn-left  { grid-column: 1; grid-row: 2; }
-        #btn-right { grid-column: 3; grid-row: 2; }
-        #btn-down  { grid-column: 2; grid-row: 3; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 
-    <div id="hud">Loading...</div>
+    <div id="hud-top-left">Pos: 0.0, 0.0 | Joystick Control</div>
     <div id="mobile-log"></div>
     <div id="canvas-container"></div>
 
-    <div class="controls controls-left">
-        <div id="dpad">
-            <button id="btn-up" class="btn">UP</button>
-            <button id="btn-left" class="btn">LFT</button>
-            <button id="btn-right" class="btn">RGT</button>
-            <button id="btn-down" class="btn">DWN</button>
+    <div class="top-right-menu">
+        <button id="btn-menu" class="menu-btn">☰</button>
+        <button id="btn-inventory" class="menu-btn">🎒</button>
+    </div>
+
+    <div id="hotbar">
+        <div class="hotbar-slot"><span class="icon">🪵</span><span class="count" id="count-wood">0</span></div>
+        <div class="hotbar-slot"><span class="icon">🪨</span><span class="count" id="count-stone">0</span></div>
+        <div class="hotbar-slot"><span class="icon">🫐</span><span class="count" id="count-berry">0</span></div>
+        <div class="hotbar-slot"><span class="icon">🍄</span><span class="count" id="count-shroom">0</span></div>
+    </div>
+
+    <div class="controls-right">
+        <div class="radial-actions">
+            <button id="btn-cam-left" class="btn cam-btn">↺</button>
+            <button id="btn-action-1" class="btn action-btn">HIT 🪓</button>
+            <button id="btn-cam-right" class="btn cam-btn">↻</button>
+        </div>
+        <div id="joystick-base">
+            <div id="joystick-knob"></div>
         </div>
     </div>
 
-    <div class="controls controls-right">
-        <div id="cam-controls">
-            <button id="btn-cam-left" class="btn cam-btn">↺</button>
-            <button id="btn-cam-right" class="btn cam-btn">↻</button>
+    <div id="inventory-modal">
+        <h3>🎒 INVENTORY</h3>
+        <div class="inv-grid">
+            <div class="inv-slot">🪵 Wood<br><b id="inv-wood">0</b></div>
+            <div class="inv-slot">🪨 Stone<br><b id="inv-stone">0</b></div>
+            <div class="inv-slot">🫐 Berries<br><b id="inv-berry">0</b></div>
+            <div class="inv-slot">🍄 Shrooms<br><b id="inv-shroom">0</b></div>
+            <div class="inv-slot">EMPTY</div>
+            <div class="inv-slot">EMPTY</div>
         </div>
+        <button id="close-inv-btn">CLOSE</button>
     </div>
 
     <script>
-        // On-screen Mobile Error Logger
         function showMobileError(msg) {
             const logEl = document.getElementById('mobile-log');
             logEl.style.display = 'block';
@@ -152,9 +312,24 @@
         };
 
         try {
-            const hud = document.getElementById('hud');
+            const hud = document.getElementById('hud-top-left');
 
-            // 1. SCENE SETUP
+            // 1. INVENTORY STATE
+            const inventory = { wood: 0, stone: 0, berry: 0, shroom: 0 };
+
+            function updateInventoryUI() {
+                document.getElementById('count-wood').innerText = inventory.wood;
+                document.getElementById('count-stone').innerText = inventory.stone;
+                document.getElementById('count-berry').innerText = inventory.berry;
+                document.getElementById('count-shroom').innerText = inventory.shroom;
+
+                document.getElementById('inv-wood').innerText = inventory.wood;
+                document.getElementById('inv-stone').innerText = inventory.stone;
+                document.getElementById('inv-berry').innerText = inventory.berry;
+                document.getElementById('inv-shroom').innerText = inventory.shroom;
+            }
+
+            // 2. SCENE & CAMERA SETUP
             const scene = new THREE.Scene();
             scene.background = new THREE.Color(0x1a1a24);
 
@@ -167,7 +342,7 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-            // 2. LIGHTS
+            // 3. LIGHTS
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
             scene.add(ambientLight);
 
@@ -175,8 +350,8 @@
             dirLight.position.set(20, 40, 20);
             scene.add(dirLight);
 
-            // 3. WORLD PARAMETERS
-            const WORLD_SIZE = 120; // Adjusted size optimized for mobile viewports
+            // 4. WORLD MAP
+            const WORLD_SIZE = 120;
             const HALF_WORLD = WORLD_SIZE / 2;
 
             const grid = new THREE.GridHelper(WORLD_SIZE, 60, 0x00ffcc, 0x334433);
@@ -189,7 +364,7 @@
             ground.rotation.x = -Math.PI / 2;
             scene.add(ground);
 
-            // Player Setup
+            // 5. PLAYER SETUP
             const playerRadius = 0.6;
             const playerGroup = new THREE.Group();
 
@@ -209,9 +384,10 @@
 
             scene.add(playerGroup);
 
-            const colliders = [];
+            // 6. HARVESTABLE NODES & DROPS REGISTRY
+            const harvestables = [];
+            const droppedItems = [];
 
-            // OBJECT GENERATORS
             function createTree(x, z) {
                 const group = new THREE.Group();
                 const trunk = new THREE.Mesh(
@@ -230,19 +406,19 @@
 
                 group.position.set(x, 0, z);
                 scene.add(group);
-                colliders.push({ x: x, z: z, radius: 0.9 });
+
+                harvestables.push({ mesh: group, type: 'tree', dropType: 'wood', hp: 3, x: x, z: z, radius: 0.9 });
             }
 
-            function createBoulder(x, z, scale) {
-                scale = scale || 1;
+            function createBoulder(x, z) {
                 const rock = new THREE.Mesh(
-                    new THREE.DodecahedronGeometry(1 * scale, 1),
+                    new THREE.DodecahedronGeometry(1, 1),
                     new THREE.MeshStandardMaterial({ color: 0x777788, flatShading: true })
                 );
-                rock.position.set(x, 0.7 * scale, z);
-                rock.rotation.set(Math.random(), Math.random(), Math.random());
+                rock.position.set(x, 0.7, z);
                 scene.add(rock);
-                colliders.push({ x: x, z: z, radius: 1.0 * scale });
+
+                harvestables.push({ mesh: rock, type: 'boulder', dropType: 'stone', hp: 4, x: x, z: z, radius: 1.0 });
             }
 
             function createBush(x, z) {
@@ -252,106 +428,142 @@
                 );
                 bush.position.set(x, 0.5, z);
                 scene.add(bush);
-                colliders.push({ x: x, z: z, radius: 0.7 });
+
+                harvestables.push({ mesh: bush, type: 'bush', dropType: 'berry', hp: 2, x: x, z: z, radius: 0.7 });
             }
 
-            const creatures = [];
-            function createCreature(x, z) {
-                const group = new THREE.Group();
-                const body = new THREE.Mesh(
-                    new THREE.BoxGeometry(0.8, 0.8, 0.8),
-                    new THREE.MeshStandardMaterial({ color: 0xaa33ff })
+            function spawnDrop(x, z, itemType) {
+                let color = 0x8b5a2b;
+                if (itemType === 'stone') color = 0xaaaaaa;
+                if (itemType === 'berry') color = 0xff0055;
+
+                const dropMesh = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.4, 0.4, 0.4),
+                    new THREE.MeshStandardMaterial({ color: color })
                 );
-                body.position.y = 0.4;
-                group.add(body);
+                dropMesh.position.set(x, 0.2, z);
+                scene.add(dropMesh);
 
-                const eyeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-                const eye1 = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.15, 0.1), eyeMat);
-                eye1.position.set(-0.2, 0.5, 0.41);
-                const eye2 = eye1.clone();
-                eye2.position.x = 0.2;
-                group.add(eye1);
-                group.add(eye2);
-
-                group.position.set(x, 0, z);
-                scene.add(group);
-
-                creatures.push({ group: group, offset: Math.random() * 10 });
-                colliders.push({ x: x, z: z, radius: 0.6 });
+                droppedItems.push({ mesh: dropMesh, type: itemType, x: x, z: z });
             }
 
-            // POPULATE WORLD
-            function populateWorld(objectCount) {
-                const spawnClearRadius = 6;
-                for (let i = 0; i < objectCount; i++) {
-                    const x = (Math.random() - 0.5) * (WORLD_SIZE - 10);
-                    const z = (Math.random() - 0.5) * (WORLD_SIZE - 10);
+            function populateNodes() {
+                for (let i = 0; i < 40; i++) {
+                    const x = (Math.random() - 0.5) * (WORLD_SIZE - 15);
+                    const z = (Math.random() - 0.5) * (WORLD_SIZE - 15);
+                    if (Math.hypot(x, z) < 6) continue;
 
-                    if (Math.hypot(x, z) < spawnClearRadius) continue;
-
-                    const type = Math.random();
-                    if (type < 0.4) createTree(x, z);
-                    else if (type < 0.65) createBoulder(x, z, 0.8 + Math.random() * 0.6);
-                    else if (type < 0.85) createBush(x, z);
-                    else createCreature(x, z);
+                    const r = Math.random();
+                    if (r < 0.5) createTree(x, z);
+                    else if (r < 0.8) createBoulder(x, z);
+                    else createBush(x, z);
                 }
             }
+            populateNodes();
 
-            populateWorld(80);
-
-            // COLLISION ENGINE
-            function isColliding(targetX, targetZ) {
+            // 7. COLLISION & ACTIONS
+            function checkCollisions(targetX, targetZ) {
                 const boundaryLimit = HALF_WORLD - 1.0;
-                if (Math.abs(targetX) > boundaryLimit || Math.abs(targetZ) > boundaryLimit) {
-                    return true;
-                }
+                if (Math.abs(targetX) > boundaryLimit || Math.abs(targetZ) > boundaryLimit) return true;
 
-                for (let i = 0; i < colliders.length; i++) {
-                    const c = colliders[i];
-                    const dx = targetX - c.x;
-                    const dz = targetZ - c.z;
-                    if (Math.hypot(dx, dz) < (playerRadius + c.radius)) {
+                for (let h of harvestables) {
+                    if (Math.hypot(targetX - h.x, targetZ - h.z) < (playerRadius + h.radius)) {
                         return true;
                     }
                 }
                 return false;
             }
 
-            // CONTROLS
-            const keys = {
-                up: false, down: false, left: false, right: false,
-                camLeft: false, camRight: false
-            };
+            function performHitAction() {
+                const hitRange = 2.0;
+                for (let i = harvestables.length - 1; i >= 0; i--) {
+                    const h = harvestables[i];
+                    const dist = Math.hypot(playerGroup.position.x - h.x, playerGroup.position.z - h.z);
 
-            function setupButton(id, key) {
-                const btn = document.getElementById(id);
-                if (!btn) return;
+                    if (dist <= (playerRadius + h.radius + hitRange)) {
+                        h.hp--;
+                        h.mesh.position.x += (Math.random() - 0.5) * 0.2;
 
-                const press = (e) => {
-                    e.preventDefault();
-                    keys[key] = true;
-                };
-                const release = (e) => {
-                    e.preventDefault();
-                    keys[key] = false;
-                };
-
-                btn.addEventListener('touchstart', press, { passive: false });
-                btn.addEventListener('touchend', release, { passive: false });
-                btn.addEventListener('touchcancel', release, { passive: false });
-                btn.addEventListener('mousedown', press);
-                btn.addEventListener('mouseup', release);
-                btn.addEventListener('mouseleave', release);
+                        if (h.hp <= 0) {
+                            scene.remove(h.mesh);
+                            spawnDrop(h.x, h.z, h.dropType);
+                            harvestables.splice(i, 1);
+                        }
+                        return;
+                    }
+                }
             }
 
-            setupButton('btn-up', 'up');
-            setupButton('btn-down', 'down');
-            setupButton('btn-left', 'left');
-            setupButton('btn-right', 'right');
-            setupButton('btn-cam-left', 'camLeft');
-            setupButton('btn-cam-right', 'camRight');
+            function updateDrops() {
+                for (let i = droppedItems.length - 1; i >= 0; i--) {
+                    const item = droppedItems[i];
+                    const dist = Math.hypot(playerGroup.position.x - item.x, playerGroup.position.z - item.z);
 
-            // GAME LOOP
+                    if (dist < 1.5) {
+                        inventory[item.type] = (inventory[item.type] || 0) + 1;
+                        updateInventoryUI();
+
+                        scene.remove(item.mesh);
+                        droppedItems.splice(i, 1);
+                    }
+                }
+            }
+
+            // 8. VIRTUAL JOYSTICK & CAMERA BUTTON CONTROLS
+            let joystickVector = { x: 0, y: 0 };
+            const baseEl = document.getElementById('joystick-base');
+            const knobEl = document.getElementById('joystick-knob');
+            const maxRadius = 40;
+
+            function handleJoystickMove(e) {
+                e.preventDefault();
+                const touch = e.touches ? e.touches[0] : e;
+                const rect = baseEl.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+
+                let dx = touch.clientX - centerX;
+                let dy = touch.clientY - centerY;
+                const dist = Math.hypot(dx, dy);
+
+                if (dist > maxRadius) {
+                    dx = (dx / dist) * maxRadius;
+                    dy = (dy / dist) * maxRadius;
+                }
+
+                knobEl.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+                joystickVector = { x: dx / maxRadius, y: dy / maxRadius };
+            }
+
+            function resetJoystick(e) {
+                if (e) e.preventDefault();
+                knobEl.style.transform = `translate(-50%, -50%)`;
+                joystickVector = { x: 0, y: 0 };
+            }
+
+            baseEl.addEventListener('touchstart', handleJoystickMove, { passive: false });
+            baseEl.addEventListener('touchmove', handleJoystickMove, { passive: false });
+            baseEl.addEventListener('touchend', resetJoystick, { passive: false });
+            baseEl.addEventListener('touchcancel', resetJoystick, { passive: false });
+
+            // Camera buttons
+            let camRotInput = 0;
+            function bindCamButton(id, val) {
+                const btn = document.getElementById(id);
+                btn.addEventListener('touchstart', (e) => { e.preventDefault(); camRotInput = val; }, { passive: false });
+                btn.addEventListener('touchend', (e) => { e.preventDefault(); camRotInput = 0; }, { passive: false });
+            }
+            bindCamButton('btn-cam-left', -1);
+            bindCamButton('btn-cam-right', 1);
+
+            document.getElementById('btn-action-1').onclick = performHitAction;
+
+            // Modal Toggles
+            const invModal = document.getElementById('inventory-modal');
+            document.getElementById('btn-inventory').onclick = () => { invModal.style.display = 'block'; };
+            document.getElementById('close-inv-btn').onclick = () => { invModal.style.display = 'none'; };
+
+            // 9. GAME LOOP
             const clock = new THREE.Clock();
             const moveSpeed = 8;
             const camRotateSpeed = 2.0;
@@ -364,63 +576,55 @@
                 requestAnimationFrame(animate);
 
                 const delta = clock.getDelta();
-                const elapsed = clock.getElapsedTime();
                 const moveStep = moveSpeed * delta;
                 const rotStep = camRotateSpeed * delta;
 
-                creatures.forEach(c => {
-                    c.group.position.y = Math.sin(elapsed * 3 + c.offset) * 0.15;
-                });
-
-                if (keys.camLeft) cameraAngle -= rotStep;
-                if (keys.camRight) cameraAngle += rotStep;
-
-                let dx = 0;
-                let dz = 0;
-
-                if (keys.up) {
-                    dx -= Math.sin(cameraAngle) * moveStep;
-                    dz -= Math.cos(cameraAngle) * moveStep;
-                }
-                if (keys.down) {
-                    dx += Math.sin(cameraAngle) * moveStep;
-                    dz += Math.cos(cameraAngle) * moveStep;
-                }
-                if (keys.left) {
-                    dx -= Math.cos(cameraAngle) * moveStep;
-                    dz += Math.sin(cameraAngle) * moveStep;
-                }
-                if (keys.right) {
-                    dx += Math.cos(cameraAngle) * moveStep;
-                    dz -= Math.sin(cameraAngle) * moveStep;
+                // Manual Camera Rotation Override
+                if (camRotInput !== 0) {
+                    cameraAngle += camRotInput * rotStep;
                 }
 
-                if (dx !== 0) {
-                    const nextX = playerGroup.position.x + dx;
-                    if (!isColliding(nextX, playerGroup.position.z)) {
+                // Movement from Round Stick Joystick
+                const jx = joystickVector.x;
+                const jy = joystickVector.y;
+
+                if (Math.abs(jx) > 0.1 || Math.abs(jy) > 0.1) {
+                    let moveX = jx * moveStep;
+                    let moveZ = jy * moveStep;
+
+                    const nextX = playerGroup.position.x + moveX;
+                    const nextZ = playerGroup.position.z + moveZ;
+
+                    if (!checkCollisions(nextX, playerGroup.position.z)) {
                         playerGroup.position.x = nextX;
                     }
-                }
-
-                if (dz !== 0) {
-                    const nextZ = playerGroup.position.z + dz;
-                    if (!isColliding(playerGroup.position.x, nextZ)) {
+                    if (!checkCollisions(playerGroup.position.x, nextZ)) {
                         playerGroup.position.z = nextZ;
+                    }
+
+                    // Face Movement Direction
+                    const targetAngle = Math.atan2(moveX, moveZ);
+                    playerGroup.rotation.y = targetAngle;
+
+                    // Camera Auto-Follow Character Direction (Default behavior)
+                    if (camRotInput === 0) {
+                        const desiredCamAngle = targetAngle + Math.PI;
+                        let angleDiff = desiredCamAngle - cameraAngle;
+                        // Normalize angle difference (-PI to PI)
+                        angleDiff = Math.atan2(Math.sin(angleDiff), Math.cos(angleDiff));
+                        cameraAngle += angleDiff * delta * 2.5; // Smooth camera interpolation
                     }
                 }
 
-                if (dx !== 0 || dz !== 0) {
-                    const heading = Math.atan2(dx, dz);
-                    playerGroup.rotation.y = heading + Math.PI;
-                }
+                updateDrops();
 
+                // Camera Positioning
                 camera.position.x = playerGroup.position.x + Math.sin(cameraAngle) * cameraDistance;
                 camera.position.z = playerGroup.position.z + Math.cos(cameraAngle) * cameraDistance;
                 camera.position.y = playerGroup.position.y + cameraHeight;
                 camera.lookAt(playerGroup.position.x, playerGroup.position.y + 0.6, playerGroup.position.z);
 
-                const camDegrees = Math.round((cameraAngle * 180 / Math.PI) % 360);
-                hud.innerText = `X: ${playerGroup.position.x.toFixed(1)}, Z: ${playerGroup.position.z.toFixed(1)} | Cam: ${camDegrees}°`;
+                hud.innerText = `X: ${playerGroup.position.x.toFixed(1)}, Z: ${playerGroup.position.z.toFixed(1)} | Joystick Active`;
 
                 renderer.render(scene, camera);
             }
