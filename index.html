@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>3D Mechanical Hub Prototype</title>
+    
+    <style>
+        /* This removes default browser margins and hides scrollbars so the game acts like an app */
+        body { margin: 0; overflow: hidden; background-color: #000; touch-action: none; }
+        
+        /* The canvas where the 3D world is drawn will take up the whole screen */
+        #game-canvas { width: 100vw; height: 100vh; display: block; }
+        
+        /* --- MOBILE D-PAD UI STYLING --- */
+        #dpad-container {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            width: 150px;
+            height: 150px;
+            /* We use a grid layout to easily arrange the Up/Down/Left/Right buttons */
+            display: grid;
+            grid-template-columns: 50px 50px 50px;
+            grid-template-rows: 50px 50px 50px;
+            opacity: 0.7; /* Slightly see-through so it doesn't block the view */
+        }
+        
+        .dpad-btn {
+            background-color: rgba(255, 255, 255, 0.5);
+            border: 2px solid white;
+            border-radius: 10px;
+            color: black;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            user-select: none; /* Stops the text from being highlighted when tapped */
+        }
+        
+        .dpad-btn:active { background-color: white; } /* Flashes white when pressed */
+        
+        /* Placing the buttons in the correct grid slots */
+        #btn-up { grid-column: 2; grid-row: 1; }
+        #btn-down { grid-column: 2; grid-row: 3; }
+        #btn-left { grid-column: 1; grid-row: 2; }
+        #btn-right { grid-column: 3; grid-row: 2; }
+    </style>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+    <div id="game-canvas"></div>
+
+    <div id="dpad-container">
+        <div id="btn-up" class="dpad-btn">UP</div>
+        <div id="btn-left" class="dpad-btn">LFT</div>
+        <div id="btn-right" class="dpad-btn">RGT</div>
+        <div id="btn-down" class="dpad-btn">DWN</div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. ENGINE SETUP (SCENE, CAMERA, RENDERER)
+        // ==========================================
+        
+        // The Scene is the empty 3D universe where all our objects will live.
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x87ceeb); // Hex code for sky blue
+
+        // The Camera is the player's "eyes". We use a PerspectiveCamera for realistic depth.
+        // Parameters: (Field of View, Aspect Ratio, Near clipping plane, Far clipping plane)
+        const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+        
+        // We tilt the camera back and up to create that isometric/3DS Pokémon perspective.
+        camera.position.set(0, 12, 15); 
+        camera.lookAt(0, 0, 0); // Force the camera to stare at the center of the world
+
+        // The Renderer acts as the "painter", drawing the scene 60 times a second.
+        const renderer = new THREE.WebGLRenderer({ antialias: true }); // antialias smooths jagged edges
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('game-canvas').appendChild(renderer.domElement);
+
+        // ==========================================
+        // 2. LIGHTING (SO WE CAN SEE 3D SHAPES)
+        // ==========================================
+        
+        // Ambient Light bathes the whole scene in a soft light so shadows aren't pitch black.
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5); 
+        scene.add(ambientLight);
+
+        // Directional Light acts like the Sun, creating highlights and depth on our 3D shapes.
+        const sunLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        sunLight.position.set(10, 20, 10);
+        scene.add(sunLight);
+
+        // ==========================================
+        // 3. PLACING ASSETS (THE HUB PLANE & SHAPES)
+        // ==========================================
+
+        // A. The Ground Plane (Our Hub)
+        // Geometry defines the shape (width, height). Material defines the look (color).
+        const groundGeo = new THREE.PlaneGeometry(50, 50);
+        const groundMat = new THREE.MeshStandardMaterial({ color: 0x55aa55 }); // Grassy green
+        const ground = new THREE.Mesh(groundGeo, groundMat);
+        ground.rotation.x = -Math.PI / 2; // Planes stand up by default, so we rotate it 90 degrees to lay it flat.
+        scene.add(ground);
+
+        // B. The Player (A Blue Cube Placeholder)
+        const playerGeo = new THREE.BoxGeometry(1, 1, 1);
+        const playerMat = new THREE.MeshStandardMaterial({ color: 0x3333ff }); // Bright blue
+        const player = new THREE.Mesh(playerGeo, playerMat);
+        player.position.y = 0.5; // Lift the cube up by half its height so it sits ON the ground, not IN it.
+        scene.add(player);
+
+        // C. Environmental Assets (Red Cones representing Trees/Resources)
+        // We use a simple loop to place 5 random "trees" in our hub.
+        const treeGeo = new THREE.ConeGeometry(0.5, 2, 8);
+        const treeMat = new THREE.MeshStandardMaterial({ color: 0xff3333 }); // Red so they stand out
+        
+        for (let i = 0; i < 5; i++) {
+            const tree = new THREE.Mesh(treeGeo, treeMat);
+            // Math.random() generates a number between 0 and 1. This spreads them randomly across the plane.
+            tree.position.x = (Math.random() - 0.5) * 40; 
+            tree.position.z = (Math.random() - 0.5) * 40;
+            tree.position.y = 1; // Sit on the ground
+            scene.add(tree);
+        }
+
+        // ==========================================
+        // 4. MOVEMENT MECHANICS & CONTROLS
+        // ==========================================
+
+        // These variables track which direction the player is currently trying to move.
+        let moveUp = false, moveDown = false, moveLeft = false, moveRight = false;
+        const speed = 0.15; // How fast the player moves per frame.
+
+        // Helper function to link an HTML button to our movement variables
+        function bindButton(id, dirObj) {
+            const btn = document.getElementById(id);
+            // When finger touches down, set movement to true
+            btn.addEventListener('touchstart', (e) => { e.preventDefault(); dirObj.active = true; });
+            btn.addEventListener('mousedown', (e) => { e.preventDefault(); dirObj.active = true; });
+            // When finger lifts up, stop moving
+            btn.addEventListener('touchend', (e) => { e.preventDefault(); dirObj.active = false; });
+            btn.addEventListener('mouseup', (e) => { e.preventDefault(); dirObj.active = false; });
+            btn.addEventListener('mouseleave', (e) => { e.preventDefault(); dirObj.active = false; });
+        }
+
+        // We use objects here so the helper function can modify the original variables by reference.
+        const dirs = { up: {active: false}, down: {active: false}, left: {active: false}, right: {active: false} };
+        
+        bindButton('btn-up', dirs.up);
+        bindButton('btn-down', dirs.down);
+        bindButton('btn-left', dirs.left);
+        bindButton('btn-right', dirs.right);
+
+        // ==========================================
+        // 5. THE GAME LOOP (THE ENGINE HEARTBEAT)
+        // ==========================================
+        
+        // This function runs automatically 60 times every single second.
+        function animate() {
+            requestAnimationFrame(animate); // Tells the browser to run this again next frame.
+
+            // 1. Apply movement based on which buttons are pressed.
+            if (dirs.up.active) player.position.z -= speed;
+            if (dirs.down.active) player.position.z += speed;
+            if (dirs.left.active) player.position.x -= speed;
+            if (dirs.right.active) player.position.x += speed;
+
+            // 2. Make the camera follow the player, keeping the fixed isometric tilt.
+            camera.position.x = player.position.x;
+            camera.position.z = player.position.z + 15; // Stay slightly behind the player
+            
+            // 3. Render the updated scene to the screen.
+            renderer.render(scene, camera);
+        }
+
+        // Start the heartbeat loop!
+        animate();
+
+        // If the player rotates their phone, this fixes the camera so it doesn't squish the graphics.
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+    </script>
+</body>
+  </html>
