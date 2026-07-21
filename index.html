@@ -15,17 +15,21 @@
 
         body { 
             margin: 0; 
+            padding: 0;
             overflow: hidden; 
-            background-color: #000; 
+            background-color: #000;
         }
 
         #game-canvas { 
             width: 100vw; 
             height: 100vh; 
             display: block; 
+            position: absolute;
+            top: 0; 
+            left: 0;
+            z-index: 1;
         }
 
-        /* --- DEBUG HUD --- */
         #debug-hud {
             position: absolute;
             top: 15px;
@@ -33,8 +37,221 @@
             color: #ffffff;
             font-family: monospace;
             font-size: 14px;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.8);
             padding: 8px 12px;
+            border-radius: 6px;
+            z-index: 999;
+            pointer-events: none;
+        }
+        
+        #dpad-container {
+            position: absolute;
+            bottom: 30px;
+            left: 20px;
+            width: 130px;
+            height: 130px;
+            display: grid;
+            grid-template-columns: 42px 42px 42px;
+            grid-template-rows: 42px 42px 42px;
+            z-index: 999;
+        }
+        
+        #cam-container {
+            position: absolute;
+            bottom: 30px;
+            right: 20px;
+            width: 110px;
+            display: flex;
+            justify-content: space-between;
+            z-index: 999;
+        }
+        
+        .ui-btn {
+            background-color: rgba(255, 255, 255, 0.5);
+            border: 2px solid white;
+            border-radius: 10px;
+            color: black;
+            font-weight: bold;
+            font-size: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
+        }
+        
+        .cam-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+        }
+        
+        #btn-up { grid-column: 2; grid-row: 1; }
+        #btn-down { grid-column: 2; grid-row: 3; }
+        #btn-left { grid-column: 1; grid-row: 2; }
+        #btn-right { grid-column: 3; grid-row: 2; }
+    </style>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+    <div id="debug-hud">Input: IDLE</div>
+    <div id="game-canvas"></div>
+
+    <div id="dpad-container">
+        <div id="btn-up" class="ui-btn">UP</div>
+        <div id="btn-left" class="ui-btn">LFT</div>
+        <div id="btn-right" class="ui-btn">RGT</div>
+        <div id="btn-down" class="ui-btn">DWN</div>
+    </div>
+
+    <div id="cam-container">
+        <div id="btn-cam-left" class="ui-btn cam-btn">↺</div>
+        <div id="btn-cam-right" class="ui-btn cam-btn">↻</div>
+    </div>
+
+    <script>
+        const debugHud = document.getElementById('debug-hud');
+
+        // 1. ENGINE SETUP
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x87ceeb);
+        
+        const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('game-canvas').appendChild(renderer.domElement);
+
+        const clock = new THREE.Clock();
+
+        // 2. LIGHTING & ASSETS
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6); 
+        scene.add(ambientLight);
+        const sunLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        sunLight.position.set(10, 20, 10);
+        scene.add(sunLight);
+
+        // Ground Plane
+        const ground = new THREE.Mesh(
+            new THREE.PlaneGeometry(50, 50), 
+            new THREE.MeshStandardMaterial({ color: 0x55aa55 })
+        );
+        ground.rotation.x = -Math.PI / 2;
+        scene.add(ground);
+
+        // Player Cube
+        const player = new THREE.Mesh(
+            new THREE.BoxGeometry(1, 1, 1), 
+            new THREE.MeshStandardMaterial({ color: 0x3333ff })
+        );
+        player.position.y = 0.5;
+        scene.add(player);
+        
+        // Fixed Red Conical Trees (Guaranteed Visible Locations)
+        const treePositions = [
+            { x: -4, z: -4 },
+            { x: 4, z: -4 },
+            { x: -6, z: 4 },
+            { x: 6, z: 4 },
+            { x: 0, z: -8 }
+        ];
+
+        const treeGeo = new THREE.ConeGeometry(0.8, 2.5, 8);
+        const treeMat = new THREE.MeshStandardMaterial({ color: 0xff3333 });
+
+        treePositions.forEach(pos => {
+            const tree = new THREE.Mesh(treeGeo, treeMat);
+            tree.position.set(pos.x, 1.25, pos.z);
+            scene.add(tree);
+        });
+
+        // 3. MOVEMENT & CAMERA VARIABLES
+        const moveSpeedUnits = 8;
+        const rotateSpeedUnits = 2.0;
+        let cameraAngle = 0; 
+        const cameraDistance = 15;
+        const cameraHeight = 12;
+
+        const dirs = { 
+            up: false, down: false, left: false, right: false, 
+            camLeft: false, camRight: false 
+        };
+
+        function updateHUD() {
+            const active = Object.keys(dirs).filter(k => dirs[k]);
+            debugHud.innerText = 'Input: ' + (active.length ? active.join(', ').toUpperCase() : 'IDLE');
+        }
+
+        // 4. CLEAN TOUCH & MOUSE INPUT BINDING
+        function bindButton(id, dirKey) {
+            const btn = document.getElementById(id);
+
+            const start = (e) => {
+                if (e.cancelable) e.preventDefault();
+                dirs[dirKey] = true;
+                btn.style.backgroundColor = '#00ffcc';
+                updateHUD();
+            };
+
+            const stop = (e) => {
+                if (e.cancelable) e.preventDefault();
+                dirs[dirKey] = false;
+                btn.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
+                updateHUD();
+            };
+
+            // Touch events for mobile
+            btn.addEventListener('touchstart', start, { passive: false });
+            btn.addEventListener('touchend', stop, { passive: false });
+            btn.addEventListener('touchcancel', stop, { passive: false });
+
+            // Mouse events for desktop testing
+            btn.addEventListener('mousedown', start);
+            btn.addEventListener('mouseup', stop);
+            btn.addEventListener('mouseleave', stop);
+        }
+
+        bindButton('btn-up', 'up');
+        bindButton('btn-down', 'down');
+        bindButton('btn-left', 'left');
+        bindButton('btn-right', 'right');
+        bindButton('btn-cam-left', 'camLeft');
+        bindButton('btn-cam-right', 'camRight');
+
+        // Prevent full-screen scrolling while playing
+        document.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+
+        // 5. GAME LOOP
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const delta = clock.getDelta();
+            const speed = moveSpeedUnits * delta;
+            const rotateSpeed = rotateSpeedUnits * delta;
+
+            if (dirs.camLeft) cameraAngle -= rotateSpeed;
+            if (dirs.camRight) cameraAngle += rotateSpeed;
+
+            if (dirs.up) {
+                player.position.x -= Math.sin(cameraAngle) * speed;
+                player.position.z -= Math.cos(cameraAngle) * speed;
+            }
+            if (dirs.down) {
+                player.position.x += Math.sin(cameraAngle) * speed;
+                player.position.z += Math.cos(cameraAngle) * speed;
+            }
+            if (dirs.left) {
+                player.position.x -= Math.cos(cameraAngle) * speed;
+                player.position.z += Math.sin(cameraAngle) * speed;
+            }
+            if (dirs.right) {
+                player.position.x += Math.cos(cameraAngle) * speed;
+                player.position.z -= Math.sin(cameraAngle) * speed;
+            }
+
+            camera.position.x = player.position.x + Math            padding: 8px 12px;
             border-radius: 6px;
             z-index: 20;
             pointer-events: none;
