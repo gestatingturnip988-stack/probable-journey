@@ -31,19 +31,73 @@
             z-index: 1;
         }
 
-        /* --- UI OVERLAYS --- */
-        #hud-top-left {
+        /* --- HUD OVERLAYS (Matching Sketch 1) --- */
+        #hud-bottom-left {
             position: absolute;
-            top: 10px;
-            left: 10px;
-            color: #fff;
-            background: rgba(0,0,0,0.75);
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 11px;
+            bottom: 15px;
+            left: 15px;
             z-index: 10;
-            border: 1px solid #444;
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
             pointer-events: none;
+        }
+
+        #minimap-box {
+            width: 80px;
+            height: 80px;
+            background: rgba(10, 15, 25, 0.85);
+            border: 2px solid #00ffcc;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #00ffcc;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        #status-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            width: 130px;
+            background: rgba(0,0,0,0.75);
+            padding: 6px;
+            border-radius: 6px;
+            border: 1px solid #444;
+        }
+
+        .bar-container {
+            width: 100%;
+            height: 12px;
+            background: #222;
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid #555;
+        }
+
+        .bar-fill {
+            height: 100%;
+            width: 100%;
+            transition: width 0.2s;
+        }
+
+        .bar-fill.exp { background: #00ffaa; width: 45%; }
+        .bar-fill.hp { background: #ff3344; width: 100%; }
+        .bar-fill.energy { background: #ffcc00; width: 80%; }
+        .bar-fill.hunger { background: #a66a38; width: 65%; }
+
+        .bar-label {
+            position: absolute;
+            top: 0;
+            left: 4px;
+            font-size: 8px;
+            color: #fff;
+            line-height: 12px;
+            font-weight: bold;
+            text-shadow: 1px 1px 1px #000;
         }
 
         .top-right-menu {
@@ -52,8 +106,7 @@
             right: 10px;
             z-index: 10;
             display: flex;
-            flex-direction: column;
-            gap: 6px;
+            gap: 8px;
         }
 
         .menu-btn {
@@ -168,9 +221,7 @@
             background: rgba(0, 255, 204, 0.85);
         }
 
-        .btn:active { background: #00ffcc !important; }
-
-        /* Virtual Joystick */
+        /* Joystick Base & Knob */
         #joystick-base {
             width: 120px;
             height: 120px;
@@ -194,57 +245,208 @@
             pointer-events: none;
         }
 
-        /* Inventory Modal */
-        #inventory-modal {
+        /* --- FULL MENU INTERFACE (Matching Sketch 2) --- */
+        #menu-modal {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 80vw;
-            max-width: 320px;
-            background: rgba(20, 20, 30, 0.95);
+            width: 92vw;
+            height: 85vh;
+            max-width: 750px;
+            max-height: 500px;
+            background: rgba(18, 22, 32, 0.96);
             border: 2px solid #00ffcc;
             border-radius: 12px;
-            padding: 15px;
-            color: #fff;
             z-index: 100;
             display: none;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.3);
         }
 
-        #inventory-modal h3 {
-            margin: 0 0 10px 0;
-            text-align: center;
+        .menu-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(10, 14, 22, 0.9);
+            padding: 8px 16px;
+            border-bottom: 2px solid #334455;
+        }
+
+        .menu-header h2 {
+            margin: 0;
             color: #00ffcc;
-            font-size: 14px;
+            font-size: 15px;
+            letter-spacing: 1px;
         }
 
-        .inv-grid {
+        .close-btn {
+            background: #ff4444;
+            color: #fff;
+            border: none;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .menu-body {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Left Side: Character Equipment Paperdoll */
+        .equipment-panel {
+            width: 48%;
+            background: rgba(255, 255, 255, 0.03);
+            border-right: 2px solid #334455;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .paperdoll-container {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: 50px 1fr 50px;
             gap: 8px;
-            margin-bottom: 12px;
+            width: 100%;
+            height: 100%;
+            align-items: center;
         }
 
-        .inv-slot {
-            background: rgba(255,255,255,0.1);
-            border: 1px solid #666;
-            height: 55px;
+        .equip-column {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            justify-content: center;
+        }
+
+        .equip-slot {
+            width: 48px;
+            height: 48px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid #667788;
             border-radius: 6px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-size: 11px;
+            position: relative;
         }
 
-        #close-inv-btn {
-            width: 100%;
-            padding: 8px;
-            background: #ff4444;
-            color: #fff;
+        .equip-slot .slot-label {
+            font-size: 7px;
+            color: #8899aa;
+            position: absolute;
+            top: 2px;
+            left: 3px;
+        }
+
+        .equip-slot .item-icon {
+            font-size: 18px;
+        }
+
+        .character-avatar-box {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid #445566;
+            border-radius: 8px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #00ffcc;
+            font-size: 11px;
+            text-align: center;
+        }
+
+        .avatar-placeholder {
+            font-size: 50px;
+            margin-bottom: 5px;
+        }
+
+        /* Right Side: Tabbed Inventory & Systems */
+        .inventory-panel {
+            width: 52%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tab-bar {
+            display: flex;
+            background: rgba(10, 14, 22, 0.8);
+            border-bottom: 1px solid #334455;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 8px 4px;
+            background: transparent;
             border: none;
+            color: #8899aa;
+            font-size: 13px;
+            text-align: center;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab-btn.active {
+            color: #00ffcc;
+            border-bottom: 2px solid #00ffcc;
+            background: rgba(0, 255, 204, 0.1);
+        }
+
+        .tab-content {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+        }
+
+        .inv-grid-large {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+        }
+
+        .inv-item-slot {
+            aspect-ratio: 1;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid #556677;
             border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 10px;
+            position: relative;
+        }
+
+        .inv-item-slot .qty {
+            position: absolute;
+            bottom: 2px;
+            right: 4px;
+            font-size: 9px;
+            color: #00ffcc;
             font-weight: bold;
+        }
+
+        /* Skill List Styling */
+        .skill-item {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid #445566;
+            border-radius: 6px;
+            padding: 8px;
+            margin-bottom: 6px;
+        }
+
+        .skill-item b {
+            color: #00ffcc;
+            font-size: 12px;
         }
 
         #mobile-log {
@@ -267,13 +469,21 @@
 </head>
 <body>
 
-    <div id="hud-top-left">Pos: 0.0, 0.0 | Mode: FREE</div>
     <div id="mobile-log"></div>
     <div id="canvas-container"></div>
 
+    <div id="hud-bottom-left">
+        <div id="minimap-box">MAP</div>
+        <div id="status-bars">
+            <div class="bar-container"><div class="bar-fill exp"></div><span class="bar-label">EXP Lv.5</span></div>
+            <div class="bar-container"><div class="bar-fill hp"></div><span class="bar-label">HEALTH</span></div>
+            <div class="bar-container"><div class="bar-fill energy"></div><span class="bar-label">ENERGY</span></div>
+            <div class="bar-container"><div class="bar-fill hunger"></div><span class="bar-label">HUNGER</span></div>
+        </div>
+    </div>
+
     <div class="top-right-menu">
-        <button id="btn-menu" class="menu-btn">☰</button>
-        <button id="btn-inventory" class="menu-btn">🎒</button>
+        <button id="btn-menu-open" class="menu-btn">🎒</button>
     </div>
 
     <div id="hotbar">
@@ -295,17 +505,85 @@
         </div>
     </div>
 
-    <div id="inventory-modal">
-        <h3>🎒 INVENTORY</h3>
-        <div class="inv-grid">
-            <div class="inv-slot">🪵 Wood<br><b id="inv-wood">0</b></div>
-            <div class="inv-slot">🪨 Stone<br><b id="inv-stone">0</b></div>
-            <div class="inv-slot">🫐 Berries<br><b id="inv-berry">0</b></div>
-            <div class="inv-slot">🍄 Shrooms<br><b id="inv-shroom">0</b></div>
-            <div class="inv-slot">EMPTY</div>
-            <div class="inv-slot">EMPTY</div>
+    <div id="menu-modal">
+        <div class="menu-header">
+            <h2>MY EQUIPMENT & INVENTORY</h2>
+            <button id="btn-menu-close" class="close-btn">✕ CLOSE</button>
         </div>
-        <button id="close-inv-btn">CLOSE</button>
+        <div class="menu-body">
+            
+            <div class="equipment-panel">
+                <div class="paperdoll-container">
+                    <div class="equip-column">
+                        <div class="equip-slot"><span class="slot-label">MAIN</span><span class="item-icon">🪓</span></div>
+                        <div class="equip-slot"><span class="slot-label">HEAD</span></div>
+                        <div class="equip-slot"><span class="slot-label">FACE</span></div>
+                        <div class="equip-slot"><span class="slot-label">BACK</span></div>
+                        <div class="equip-slot"><span class="slot-label">EXTRA</span></div>
+                    </div>
+
+                    <div class="character-avatar-box">
+                        <div class="avatar-placeholder">🧍</div>
+                        <b>Generic Character</b>
+                        <span style="font-size:9px; color:#888; margin-top:4px;">Lv. 5 Adventurer</span>
+                    </div>
+
+                    <div class="equip-column">
+                        <div class="equip-slot"><span class="slot-label">OFFHAND</span></div>
+                        <div class="equip-slot"><span class="slot-label">TORSO</span><span class="item-icon">🛡️</span></div>
+                        <div class="equip-slot"><span class="slot-label">WRIST</span></div>
+                        <div class="equip-slot"><span class="slot-label">LEGS</span></div>
+                        <div class="equip-slot"><span class="slot-label">FEET</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="inventory-panel">
+                <div class="tab-bar">
+                    <button class="tab-btn active" onclick="switchTab('inv')">🎒</button>
+                    <button class="tab-btn" onclick="switchTab('skills')">⚡</button>
+                    <button class="tab-btn" onclick="switchTab('quests')">📜</button>
+                    <button class="tab-btn" onclick="switchTab('options')">⚙️</button>
+                    <button class="tab-btn" onclick="switchTab('journal')">📖</button>
+                </div>
+
+                <div class="tab-content" id="tab-inv">
+                    <div class="inv-grid-large" id="inventory-grid">
+                        </div>
+                </div>
+
+                <div class="tab-content" id="tab-skills" style="display:none; color:#aaa; font-size:11px;">
+                    <div class="skill-item">
+                        <b>🪵 Lumberjack (Passive - Lv.2)</b>
+                        <div style="font-size:9px; color:#8899aa; margin-top:2px;">Chopping trees grants +10% yield and reduces stamina cost.</div>
+                    </div>
+                    <div class="skill-item">
+                        <b>🪨 Mining Master (Passive - Lv.1)</b>
+                        <div style="font-size:9px; color:#8899aa; margin-top:2px;">Increases stone gathering rate by +15%.</div>
+                    </div>
+                    <div class="skill-item">
+                        <b>🏃 Swift Foot (Passive - Lv.3)</b>
+                        <div style="font-size:9px; color:#8899aa; margin-top:2px;">Base movement speed increased by +8%.</div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab-quests" style="display:none; color:#aaa; font-size:11px;">
+                    <p><b>Active Quests</b></p>
+                    <p>• Gather 5 Wood logs<br>• Harvest 3 Berries</p>
+                </div>
+
+                <div class="tab-content" id="tab-options" style="display:none; color:#aaa; font-size:11px;">
+                    <p><b>Game Options</b></p>
+                    <p>Audio: 100%<br>Graphics: Medium</p>
+                </div>
+
+                <div class="tab-content" id="tab-journal" style="display:none; color:#aaa; font-size:11px;">
+                    <p><b>World Lore</b></p>
+                    <p>Discovered: The Great Whispering Forest.</p>
+                </div>
+            </div>
+
+        </div>
     </div>
 
     <script>
@@ -321,7 +599,7 @@
         };
 
         try {
-            const hud = document.getElementById('hud-top-left');
+            // Inventory & Item System
             const inventory = { wood: 0, stone: 0, berry: 0, shroom: 0 };
 
             function updateInventoryUI() {
@@ -330,11 +608,50 @@
                 document.getElementById('count-berry').innerText = inventory.berry;
                 document.getElementById('count-shroom').innerText = inventory.shroom;
 
-                document.getElementById('inv-wood').innerText = inventory.wood;
-                document.getElementById('inv-stone').innerText = inventory.stone;
-                document.getElementById('inv-berry').innerText = inventory.berry;
-                document.getElementById('inv-shroom').innerText = inventory.shroom;
+                const invGrid = document.getElementById('inventory-grid');
+                invGrid.innerHTML = '';
+
+                const items = [
+                    { icon: '🪵', name: 'Wood', count: inventory.wood },
+                    { icon: '🪨', name: 'Stone', count: inventory.stone },
+                    { icon: '🫐', name: 'Berry', count: inventory.berry },
+                    { icon: '🍄', name: 'Shroom', count: inventory.shroom }
+                ];
+
+                items.forEach(item => {
+                    if (item.count > 0) {
+                        const slot = document.createElement('div');
+                        slot.className = 'inv-item-slot';
+                        slot.innerHTML = `<span style="font-size:16px;">${item.icon}</span><span class="qty">${item.count}</span>`;
+                        invGrid.appendChild(slot);
+                    }
+                });
+
+                // Fill remaining empty slots
+                const totalSlots = 16;
+                const currentCount = invGrid.children.length;
+                for (let i = currentCount; i < totalSlots; i++) {
+                    const slot = document.createElement('div');
+                    slot.className = 'inv-item-slot';
+                    slot.style.opacity = '0.3';
+                    invGrid.appendChild(slot);
+                }
             }
+
+            // Tab Switcher
+            window.switchTab = function(tabName) {
+                const tabs = ['inv', 'skills', 'quests', 'options', 'journal'];
+                tabs.forEach((t, index) => {
+                    const content = document.getElementById(`tab-${t}`);
+                    if (content) content.style.display = (t === tabName) ? 'block' : 'none';
+                    
+                    const btn = document.querySelectorAll('.tab-btn')[index];
+                    if (btn) {
+                        if (t === tabName) btn.classList.add('active');
+                        else btn.classList.remove('active');
+                    }
+                });
+            };
 
             const scene = new THREE.Scene();
             scene.background = new THREE.Color(0x1a1a24);
@@ -510,7 +827,7 @@
                 }
             }
 
-            // --- VIRTUAL JOYSTICK & CAMERA MODE TOGGLE ---
+            // Virtual Joystick Logic
             let joystickVector = { x: 0, y: 0 };
             const baseEl = document.getElementById('joystick-base');
             const knobEl = document.getElementById('joystick-knob');
@@ -552,7 +869,7 @@
             baseEl.addEventListener('touchend', resetJoystick, { passive: false });
             baseEl.addEventListener('touchcancel', resetJoystick, { passive: false });
 
-            // Camera Toggle State: 'FREE' or 'AUTO'
+            // Camera Toggle
             let isAutoCam = false;
             const camModeBtn = document.getElementById('btn-cam-mode');
             camModeBtn.onclick = () => {
@@ -572,11 +889,19 @@
 
             document.getElementById('btn-action-1').onclick = performHitAction;
 
-            const invModal = document.getElementById('inventory-modal');
-            document.getElementById('btn-inventory').onclick = () => { invModal.style.display = 'block'; };
-            document.getElementById('close-inv-btn').onclick = () => { invModal.style.display = 'none'; };
+            // Menu Modal Control
+            const menuModal = document.getElementById('menu-modal');
+            document.getElementById('btn-menu-open').onclick = () => {
+                updateInventoryUI();
+                menuModal.style.display = 'flex';
+            };
+            document.getElementById('btn-menu-close').onclick = () => {
+                menuModal.style.display = 'none';
+            };
 
-            // GAME LOOP
+            updateInventoryUI();
+
+            // Game Loop
             const clock = new THREE.Clock();
             const moveSpeed = 8;
             const camRotateSpeed = 2.0;
@@ -592,7 +917,6 @@
                 const moveStep = moveSpeed * delta;
                 const rotStep = camRotateSpeed * delta;
 
-                // Manual Camera Rotation (Takes priority over auto)
                 if (camRotInput !== 0) {
                     cameraAngle += camRotInput * rotStep;
                 }
@@ -617,7 +941,6 @@
                     const targetAngle = Math.atan2(worldDx, worldDz);
                     playerGroup.rotation.y = targetAngle;
 
-                    // Smooth Auto-Follow camera when enabled and not manually rotating
                     if (isAutoCam && camRotInput === 0) {
                         const desiredCamAngle = targetAngle + Math.PI;
                         let angleDiff = desiredCamAngle - cameraAngle;
@@ -632,8 +955,6 @@
                 camera.position.z = playerGroup.position.z + Math.cos(cameraAngle) * cameraDistance;
                 camera.position.y = playerGroup.position.y + cameraHeight;
                 camera.lookAt(playerGroup.position.x, playerGroup.position.y + 0.6, playerGroup.position.z);
-
-                hud.innerText = `X: ${playerGroup.position.x.toFixed(1)}, Z: ${playerGroup.position.z.toFixed(1)} | Cam Mode: ${isAutoCam ? 'AUTO' : 'FREE'}`;
 
                 renderer.render(scene, camera);
             }
