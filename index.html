@@ -2,19 +2,21 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>3D World Expansion</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>3D World Mobile</title>
     <style>
         * {
             box-sizing: border-box;
             user-select: none;
             -webkit-user-select: none;
-            touch-action: manipulation;
+            touch-action: none;
         }
 
-        body {
+        html, body {
             margin: 0;
             padding: 0;
+            width: 100%;
+            height: 100%;
             overflow: hidden;
             background-color: #111;
             font-family: sans-serif;
@@ -26,6 +28,7 @@
             position: absolute;
             top: 0;
             left: 0;
+            z-index: 1;
         }
 
         #hud {
@@ -36,9 +39,27 @@
             background: rgba(0,0,0,0.7);
             padding: 8px 12px;
             border-radius: 4px;
-            font-size: 14px;
+            font-size: 12px;
             font-family: monospace;
             z-index: 10;
+            pointer-events: none;
+        }
+
+        #mobile-log {
+            position: absolute;
+            top: 45px;
+            left: 10px;
+            right: 10px;
+            color: #ff5555;
+            background: rgba(0,0,0,0.85);
+            padding: 6px;
+            font-size: 10px;
+            font-family: monospace;
+            z-index: 100;
+            display: none;
+            border-radius: 4px;
+            max-height: 80px;
+            overflow-y: auto;
         }
 
         .controls {
@@ -49,13 +70,13 @@
             gap: 15px;
         }
 
-        .controls-left { left: 20px; }
-        .controls-right { right: 20px; }
+        .controls-left { left: 15px; }
+        .controls-right { right: 15px; }
 
         #dpad {
             display: grid;
-            grid-template-columns: repeat(3, 50px);
-            grid-template-rows: repeat(3, 50px);
+            grid-template-columns: repeat(3, 45px);
+            grid-template-rows: repeat(3, 45px);
             gap: 5px;
         }
 
@@ -66,23 +87,24 @@
         }
 
         .btn {
-            background: rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.85);
             border: 2px solid #fff;
             border-radius: 8px;
             font-weight: bold;
-            font-size: 14px;
+            font-size: 13px;
             color: #000;
             display: flex;
             justify-content: center;
             align-items: center;
             outline: none;
+            touch-action: manipulation;
         }
 
         .cam-btn {
-            width: 50px;
-            height: 50px;
+            width: 45px;
+            height: 45px;
             border-radius: 50%;
-            font-size: 18px;
+            font-size: 16px;
         }
 
         .btn:active { background: #00ffcc; }
@@ -96,7 +118,8 @@
 </head>
 <body>
 
-    <div id="hud">Pos: X: 0.0, Z: 0.0 | Cam: 0°</div>
+    <div id="hud">Loading...</div>
+    <div id="mobile-log"></div>
     <div id="canvas-container"></div>
 
     <div class="controls controls-left">
@@ -116,316 +139,303 @@
     </div>
 
     <script>
-        const hud = document.getElementById('hud');
-
-        // 1. SCENE SETUP
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x1a1a24);
-
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(0, 10, 14);
-        camera.lookAt(0, 0, 0);
-
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.getElementById('canvas-container').appendChild(renderer.domElement);
-
-        // 2. LIGHTS
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
-        scene.add(ambientLight);
-
-        const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
-        dirLight.position.set(20, 40, 20);
-        scene.add(dirLight);
-
-        // 3. WORLD PARAMETERS & MAP EXPANSION
-        const WORLD_SIZE = 200;
-        const HALF_WORLD = WORLD_SIZE / 2;
-
-        const grid = new THREE.GridHelper(WORLD_SIZE, 100, 0x00ffcc, 0x334433);
-        scene.add(grid);
-
-        // Ground Plane
-        const ground = new THREE.Mesh(
-            new THREE.PlaneGeometry(WORLD_SIZE, WORLD_SIZE),
-            new THREE.MeshStandardMaterial({ color: 0x182e18 })
-        );
-        ground.rotation.x = -Math.PI / 2;
-        scene.add(ground);
-
-        // Player Group
-        const playerRadius = 0.6;
-        const playerGroup = new THREE.Group();
-
-        const playerCube = new THREE.Mesh(
-            new THREE.BoxGeometry(1.2, 1.2, 1.2),
-            new THREE.MeshStandardMaterial({ color: 0x3388ff })
-        );
-        playerCube.position.y = 0.6;
-        playerGroup.add(playerCube);
-
-        const playerPointer = new THREE.Mesh(
-            new THREE.BoxGeometry(0.3, 0.3, 0.3),
-            new THREE.MeshStandardMaterial({ color: 0xff3333 })
-        );
-        playerPointer.position.set(0, 0.6, -0.7);
-        playerGroup.add(playerPointer);
-
-        scene.add(playerGroup);
-
-        // Collider Registry
-        const colliders = [];
-
-        // --- OBJECT GENERATOR HELPERS ---
-        function createTree(x, z) {
-            const group = new THREE.Group();
-            const trunk = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.2, 0.3, 1),
-                new THREE.MeshStandardMaterial({ color: 0x5c4033 })
-            );
-            trunk.position.y = 0.5;
-            group.add(trunk);
-
-            const leaves = new THREE.Mesh(
-                new THREE.ConeGeometry(1.2, 2.5, 6),
-                new THREE.MeshStandardMaterial({ color: 0x2e8b57 })
-            );
-            leaves.position.y = 2.0;
-            group.add(leaves);
-
-            group.position.set(x, 0, z);
-            scene.add(group);
-            colliders.push({ x: x, z: z, radius: 0.9 });
+        // On-screen Mobile Error Logger
+        function showMobileError(msg) {
+            const logEl = document.getElementById('mobile-log');
+            logEl.style.display = 'block';
+            logEl.innerText += '[ERR] ' + msg + '\n';
         }
 
-        function createBoulder(x, z, scale = 1) {
-            const rock = new THREE.Mesh(
-                new THREE.DodecahedronGeometry(1 * scale, 1),
-                new THREE.MeshStandardMaterial({ color: 0x777788, flatShading: true })
-            );
-            rock.position.set(x, 0.7 * scale, z);
-            rock.rotation.set(Math.random(), Math.random(), Math.random());
-            scene.add(rock);
-            colliders.push({ x: x, z: z, radius: 1.0 * scale });
-        }
-
-        function createBush(x, z) {
-            const bush = new THREE.Mesh(
-                new THREE.IcosahedronGeometry(0.8, 1),
-                new THREE.MeshStandardMaterial({ color: 0x3a9d23, flatShading: true })
-            );
-            bush.position.set(x, 0.5, z);
-            scene.add(bush);
-            colliders.push({ x: x, z: z, radius: 0.7 });
-        }
-
-        const creatures = [];
-        function createCreature(x, z) {
-            const group = new THREE.Group();
-            const body = new THREE.Mesh(
-                new THREE.BoxGeometry(0.8, 0.8, 0.8),
-                new THREE.MeshStandardMaterial({ color: 0xaa33ff })
-            );
-            body.position.y = 0.4;
-            group.add(body);
-
-            const eyeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-            const eye1 = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.15, 0.1), eyeMat);
-            eye1.position.set(-0.2, 0.5, 0.41);
-            const eye2 = eye1.clone();
-            eye2.position.x = 0.2;
-            group.add(eye1);
-            group.add(eye2);
-
-            group.position.set(x, 0, z);
-            scene.add(group);
-
-            creatures.push({ group: group, offset: Math.random() * 10 });
-            colliders.push({ x: x, z: z, radius: 0.6 });
-        }
-
-        // --- PROCEDURAL WORLD POPULATION ---
-        function populateWorld(objectCount) {
-            const spawnClearRadius = 6;
-
-            for (let i = 0; i < objectCount; i++) {
-                const x = (Math.random() - 0.5) * (WORLD_SIZE - 10);
-                const z = (Math.random() - 0.5) * (WORLD_SIZE - 10);
-
-                if (Math.hypot(x, z) < spawnClearRadius) continue;
-
-                const type = Math.random();
-                if (type < 0.4) {
-                    createTree(x, z);
-                } else if (type < 0.65) {
-                    createBoulder(x, z, 0.8 + Math.random() * 0.6);
-                } else if (type < 0.85) {
-                    createBush(x, z);
-                } else {
-                    createCreature(x, z);
-                }
-            }
-        }
-
-        populateWorld(180);
-
-        // 4. COLLISION ENGINE
-        function isColliding(targetX, targetZ) {
-            const boundaryLimit = HALF_WORLD - 1.0;
-            if (Math.abs(targetX) > boundaryLimit || Math.abs(targetZ) > boundaryLimit) {
-                return true;
-            }
-
-            for (let i = 0; i < colliders.length; i++) {
-                const c = colliders[i];
-                const dx = targetX - c.x;
-                const dz = targetZ - c.z;
-                if (Math.hypot(dx, dz) < (playerRadius + c.radius)) {
-                    return true;
-                }
-            }
+        window.onerror = function(msg, url, lineNo) {
+            showMobileError(msg + " (line " + lineNo + ")");
             return false;
-        }
-
-        // 5. INPUT MANAGEMENT
-        const keys = {
-            up: false, down: false, left: false, right: false,
-            camLeft: false, camRight: false
         };
 
-        function setupButton(id, key) {
-            const btn = document.getElementById(id);
-            if (!btn) return;
+        try {
+            const hud = document.getElementById('hud');
 
-            const press = (e) => {
-                if (e.cancelable) e.preventDefault();
-                keys[key] = true;
+            // 1. SCENE SETUP
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a1a24);
+
+            const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 10, 14);
+            camera.lookAt(0, 0, 0);
+
+            const renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            // 2. LIGHTS
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
+            dirLight.position.set(20, 40, 20);
+            scene.add(dirLight);
+
+            // 3. WORLD PARAMETERS
+            const WORLD_SIZE = 120; // Adjusted size optimized for mobile viewports
+            const HALF_WORLD = WORLD_SIZE / 2;
+
+            const grid = new THREE.GridHelper(WORLD_SIZE, 60, 0x00ffcc, 0x334433);
+            scene.add(grid);
+
+            const ground = new THREE.Mesh(
+                new THREE.PlaneGeometry(WORLD_SIZE, WORLD_SIZE),
+                new THREE.MeshStandardMaterial({ color: 0x182e18 })
+            );
+            ground.rotation.x = -Math.PI / 2;
+            scene.add(ground);
+
+            // Player Setup
+            const playerRadius = 0.6;
+            const playerGroup = new THREE.Group();
+
+            const playerCube = new THREE.Mesh(
+                new THREE.BoxGeometry(1.2, 1.2, 1.2),
+                new THREE.MeshStandardMaterial({ color: 0x3388ff })
+            );
+            playerCube.position.y = 0.6;
+            playerGroup.add(playerCube);
+
+            const playerPointer = new THREE.Mesh(
+                new THREE.BoxGeometry(0.3, 0.3, 0.3),
+                new THREE.MeshStandardMaterial({ color: 0xff3333 })
+            );
+            playerPointer.position.set(0, 0.6, -0.7);
+            playerGroup.add(playerPointer);
+
+            scene.add(playerGroup);
+
+            const colliders = [];
+
+            // OBJECT GENERATORS
+            function createTree(x, z) {
+                const group = new THREE.Group();
+                const trunk = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.2, 0.3, 1),
+                    new THREE.MeshStandardMaterial({ color: 0x5c4033 })
+                );
+                trunk.position.y = 0.5;
+                group.add(trunk);
+
+                const leaves = new THREE.Mesh(
+                    new THREE.ConeGeometry(1.2, 2.5, 6),
+                    new THREE.MeshStandardMaterial({ color: 0x2e8b57 })
+                );
+                leaves.position.y = 2.0;
+                group.add(leaves);
+
+                group.position.set(x, 0, z);
+                scene.add(group);
+                colliders.push({ x: x, z: z, radius: 0.9 });
+            }
+
+            function createBoulder(x, z, scale) {
+                scale = scale || 1;
+                const rock = new THREE.Mesh(
+                    new THREE.DodecahedronGeometry(1 * scale, 1),
+                    new THREE.MeshStandardMaterial({ color: 0x777788, flatShading: true })
+                );
+                rock.position.set(x, 0.7 * scale, z);
+                rock.rotation.set(Math.random(), Math.random(), Math.random());
+                scene.add(rock);
+                colliders.push({ x: x, z: z, radius: 1.0 * scale });
+            }
+
+            function createBush(x, z) {
+                const bush = new THREE.Mesh(
+                    new THREE.IcosahedronGeometry(0.8, 1),
+                    new THREE.MeshStandardMaterial({ color: 0x3a9d23, flatShading: true })
+                );
+                bush.position.set(x, 0.5, z);
+                scene.add(bush);
+                colliders.push({ x: x, z: z, radius: 0.7 });
+            }
+
+            const creatures = [];
+            function createCreature(x, z) {
+                const group = new THREE.Group();
+                const body = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.8, 0.8, 0.8),
+                    new THREE.MeshStandardMaterial({ color: 0xaa33ff })
+                );
+                body.position.y = 0.4;
+                group.add(body);
+
+                const eyeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+                const eye1 = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.15, 0.1), eyeMat);
+                eye1.position.set(-0.2, 0.5, 0.41);
+                const eye2 = eye1.clone();
+                eye2.position.x = 0.2;
+                group.add(eye1);
+                group.add(eye2);
+
+                group.position.set(x, 0, z);
+                scene.add(group);
+
+                creatures.push({ group: group, offset: Math.random() * 10 });
+                colliders.push({ x: x, z: z, radius: 0.6 });
+            }
+
+            // POPULATE WORLD
+            function populateWorld(objectCount) {
+                const spawnClearRadius = 6;
+                for (let i = 0; i < objectCount; i++) {
+                    const x = (Math.random() - 0.5) * (WORLD_SIZE - 10);
+                    const z = (Math.random() - 0.5) * (WORLD_SIZE - 10);
+
+                    if (Math.hypot(x, z) < spawnClearRadius) continue;
+
+                    const type = Math.random();
+                    if (type < 0.4) createTree(x, z);
+                    else if (type < 0.65) createBoulder(x, z, 0.8 + Math.random() * 0.6);
+                    else if (type < 0.85) createBush(x, z);
+                    else createCreature(x, z);
+                }
+            }
+
+            populateWorld(80);
+
+            // COLLISION ENGINE
+            function isColliding(targetX, targetZ) {
+                const boundaryLimit = HALF_WORLD - 1.0;
+                if (Math.abs(targetX) > boundaryLimit || Math.abs(targetZ) > boundaryLimit) {
+                    return true;
+                }
+
+                for (let i = 0; i < colliders.length; i++) {
+                    const c = colliders[i];
+                    const dx = targetX - c.x;
+                    const dz = targetZ - c.z;
+                    if (Math.hypot(dx, dz) < (playerRadius + c.radius)) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            // CONTROLS
+            const keys = {
+                up: false, down: false, left: false, right: false,
+                camLeft: false, camRight: false
             };
-            const release = (e) => {
-                if (e.cancelable) e.preventDefault();
-                keys[key] = false;
-            };
 
-            btn.addEventListener('touchstart', press, { passive: false });
-            btn.addEventListener('touchend', release, { passive: false });
-            btn.addEventListener('touchcancel', release, { passive: false });
-            btn.addEventListener('mousedown', press);
-            btn.addEventListener('mouseup', release);
-            btn.addEventListener('mouseleave', release);
-        }
+            function setupButton(id, key) {
+                const btn = document.getElementById(id);
+                if (!btn) return;
 
-        setupButton('btn-up', 'up');
-        setupButton('btn-down', 'down');
-        setupButton('btn-left', 'left');
-        setupButton('btn-right', 'right');
-        setupButton('btn-cam-left', 'camLeft');
-        setupButton('btn-cam-right', 'camRight');
+                const press = (e) => {
+                    e.preventDefault();
+                    keys[key] = true;
+                };
+                const release = (e) => {
+                    e.preventDefault();
+                    keys[key] = false;
+                };
 
-        window.addEventListener('keydown', (e) => {
-            const k = e.key.toLowerCase();
-            if (e.key === 'ArrowUp' || k === 'w') keys.up = true;
-            if (e.key === 'ArrowDown' || k === 's') keys.down = true;
-            if (e.key === 'ArrowLeft' || k === 'a') keys.left = true;
-            if (e.key === 'ArrowRight' || k === 'd') keys.right = true;
-            if (k === 'q') keys.camLeft = true;
-            if (k === 'e') keys.camRight = true;
-        });
+                btn.addEventListener('touchstart', press, { passive: false });
+                btn.addEventListener('touchend', release, { passive: false });
+                btn.addEventListener('touchcancel', release, { passive: false });
+                btn.addEventListener('mousedown', press);
+                btn.addEventListener('mouseup', release);
+                btn.addEventListener('mouseleave', release);
+            }
 
-        window.addEventListener('keyup', (e) => {
-            const k = e.key.toLowerCase();
-            if (e.key === 'ArrowUp' || k === 'w') keys.up = false;
-            if (e.key === 'ArrowDown' || k === 's') keys.down = false;
-            if (e.key === 'ArrowLeft' || k === 'a') keys.left = false;
-            if (e.key === 'ArrowRight' || k === 'd') keys.right = false;
-            if (k === 'q') keys.camLeft = false;
-            if (k === 'e') keys.camRight = false;
-        });
+            setupButton('btn-up', 'up');
+            setupButton('btn-down', 'down');
+            setupButton('btn-left', 'left');
+            setupButton('btn-right', 'right');
+            setupButton('btn-cam-left', 'camLeft');
+            setupButton('btn-cam-right', 'camRight');
 
-        // 6. GAME LOOP & CAMERA
-        const clock = new THREE.Clock();
-        const moveSpeed = 8;
-        const camRotateSpeed = 2.0;
+            // GAME LOOP
+            const clock = new THREE.Clock();
+            const moveSpeed = 8;
+            const camRotateSpeed = 2.0;
 
-        let cameraAngle = 0;
-        const cameraDistance = 14;
-        const cameraHeight = 10;
+            let cameraAngle = 0;
+            const cameraDistance = 14;
+            const cameraHeight = 10;
 
-        function animate() {
-            requestAnimationFrame(animate);
+            function animate() {
+                requestAnimationFrame(animate);
 
-            const delta = clock.getDelta();
-            const elapsed = clock.getElapsedTime();
-            const moveStep = moveSpeed * delta;
-            const rotStep = camRotateSpeed * delta;
+                const delta = clock.getDelta();
+                const elapsed = clock.getElapsedTime();
+                const moveStep = moveSpeed * delta;
+                const rotStep = camRotateSpeed * delta;
 
-            creatures.forEach(c => {
-                c.group.position.y = Math.sin(elapsed * 3 + c.offset) * 0.15;
+                creatures.forEach(c => {
+                    c.group.position.y = Math.sin(elapsed * 3 + c.offset) * 0.15;
+                });
+
+                if (keys.camLeft) cameraAngle -= rotStep;
+                if (keys.camRight) cameraAngle += rotStep;
+
+                let dx = 0;
+                let dz = 0;
+
+                if (keys.up) {
+                    dx -= Math.sin(cameraAngle) * moveStep;
+                    dz -= Math.cos(cameraAngle) * moveStep;
+                }
+                if (keys.down) {
+                    dx += Math.sin(cameraAngle) * moveStep;
+                    dz += Math.cos(cameraAngle) * moveStep;
+                }
+                if (keys.left) {
+                    dx -= Math.cos(cameraAngle) * moveStep;
+                    dz += Math.sin(cameraAngle) * moveStep;
+                }
+                if (keys.right) {
+                    dx += Math.cos(cameraAngle) * moveStep;
+                    dz -= Math.sin(cameraAngle) * moveStep;
+                }
+
+                if (dx !== 0) {
+                    const nextX = playerGroup.position.x + dx;
+                    if (!isColliding(nextX, playerGroup.position.z)) {
+                        playerGroup.position.x = nextX;
+                    }
+                }
+
+                if (dz !== 0) {
+                    const nextZ = playerGroup.position.z + dz;
+                    if (!isColliding(playerGroup.position.x, nextZ)) {
+                        playerGroup.position.z = nextZ;
+                    }
+                }
+
+                if (dx !== 0 || dz !== 0) {
+                    const heading = Math.atan2(dx, dz);
+                    playerGroup.rotation.y = heading + Math.PI;
+                }
+
+                camera.position.x = playerGroup.position.x + Math.sin(cameraAngle) * cameraDistance;
+                camera.position.z = playerGroup.position.z + Math.cos(cameraAngle) * cameraDistance;
+                camera.position.y = playerGroup.position.y + cameraHeight;
+                camera.lookAt(playerGroup.position.x, playerGroup.position.y + 0.6, playerGroup.position.z);
+
+                const camDegrees = Math.round((cameraAngle * 180 / Math.PI) % 360);
+                hud.innerText = `X: ${playerGroup.position.x.toFixed(1)}, Z: ${playerGroup.position.z.toFixed(1)} | Cam: ${camDegrees}°`;
+
+                renderer.render(scene, camera);
+            }
+
+            animate();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
             });
 
-            if (keys.camLeft) cameraAngle -= rotStep;
-            if (keys.camRight) cameraAngle += rotStep;
-
-            let dx = 0;
-            let dz = 0;
-
-            if (keys.up) {
-                dx -= Math.sin(cameraAngle) * moveStep;
-                dz -= Math.cos(cameraAngle) * moveStep;
-            }
-            if (keys.down) {
-                dx += Math.sin(cameraAngle) * moveStep;
-                dz += Math.cos(cameraAngle) * moveStep;
-            }
-            if (keys.left) {
-                dx -= Math.cos(cameraAngle) * moveStep;
-                dz += Math.sin(cameraAngle) * moveStep;
-            }
-            if (keys.right) {
-                dx += Math.cos(cameraAngle) * moveStep;
-                dz -= Math.sin(cameraAngle) * moveStep;
-            }
-
-            let isMoving = false;
-
-            if (dx !== 0) {
-                const nextX = playerGroup.position.x + dx;
-                if (!isColliding(nextX, playerGroup.position.z)) {
-                    playerGroup.position.x = nextX;
-                    isMoving = true;
-                }
-            }
-
-            if (dz !== 0) {
-                const nextZ = playerGroup.position.z + dz;
-                if (!isColliding(playerGroup.position.x, nextZ)) {
-                    playerGroup.position.z = nextZ;
-                    isMoving = true;
-                }
-            }
-
-            if (dx !== 0 || dz !== 0) {
-                const heading = Math.atan2(dx, dz);
-                playerGroup.rotation.y = heading + Math.PI;
-            }
-
-            camera.position.x = playerGroup.position.x + Math.sin(cameraAngle) * cameraDistance;
-            camera.position.z = playerGroup.position.z + Math.cos(cameraAngle) * cameraDistance;
-            camera.position.y = playerGroup.position.y + cameraHeight;
-            camera.lookAt(playerGroup.position.x, playerGroup.position.y + 0.6, playerGroup.position.z);
-
-            const camDegrees = Math.round((cameraAngle * 180 / Math.PI) % 360);
-            hud.innerText = `Pos: X: ${playerGroup.position.x.toFixed(1)}, Z: ${playerGroup.position.z.toFixed(1)} | Cam: ${camDegrees}°`;
-
-            renderer.render(scene, camera);
+        } catch (err) {
+            showMobileError(err.message);
         }
-
-        animate();
-
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
     </script>
 </body>
 </html>
