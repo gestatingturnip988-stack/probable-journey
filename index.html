@@ -6,35 +6,203 @@
     <title>3D Mechanical Hub Prototype</title>
     
     <style>
-        /* This removes default browser margins and hides scrollbars so the game acts like an app */
         body { margin: 0; overflow: hidden; background-color: #000; touch-action: none; }
-        
-        /* The canvas where the 3D world is drawn will take up the whole screen */
         #game-canvas { width: 100vw; height: 100vh; display: block; }
         
-        /* --- MOBILE D-PAD UI STYLING --- */
+        /* --- MOBILE D-PAD UI STYLING (LEFT SIDE) --- */
         #dpad-container {
             position: absolute;
             bottom: 30px;
-            left: 30px;
-            width: 150px;
-            height: 150px;
-            /* We use a grid layout to easily arrange the Up/Down/Left/Right buttons */
+            left: 20px;
+            width: 130px;
+            height: 130px;
             display: grid;
-            grid-template-columns: 50px 50px 50px;
-            grid-template-rows: 50px 50px 50px;
-            opacity: 0.7; /* Slightly see-through so it doesn't block the view */
+            grid-template-columns: 42px 42px 42px;
+            grid-template-rows: 42px 42px 42px;
+            opacity: 0.8;
         }
         
-        .dpad-btn {
+        /* --- CAMERA ROTATION UI STYLING (RIGHT SIDE) --- */
+        #cam-container {
+            position: absolute;
+            bottom: 30px;
+            right: 20px;
+            width: 110px;
+            display: flex;
+            justify-content: space-between;
+            opacity: 0.8;
+        }
+        
+        .ui-btn {
             background-color: rgba(255, 255, 255, 0.5);
             border: 2px solid white;
             border-radius: 10px;
             color: black;
             font-weight: bold;
+            font-size: 12px;
             display: flex;
             justify-content: center;
             align-items: center;
+            user-select: none;
+            touch-action: manipulation;
+        }
+        
+        .ui-btn:active { background-color: white; }
+        
+        .cam-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%; /* Make camera buttons circular */
+        }
+        
+        /* Grid assignments for the D-Pad */
+        #btn-up { grid-column: 2; grid-row: 1; }
+        #btn-down { grid-column: 2; grid-row: 3; }
+        #btn-left { grid-column: 1; grid-row: 2; }
+        #btn-right { grid-column: 3; grid-row: 2; }
+    </style>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+    <div id="game-canvas"></div>
+
+    <div id="dpad-container">
+        <div id="btn-up" class="ui-btn">UP</div>
+        <div id="btn-left" class="ui-btn">LFT</div>
+        <div id="btn-right" class="ui-btn">RGT</div>
+        <div id="btn-down" class="ui-btn">DWN</div>
+    </div>
+
+    <div id="cam-container">
+        <div id="btn-cam-left" class="ui-btn cam-btn">↺</div>
+        <div id="btn-cam-right" class="ui-btn cam-btn">↻</div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. ENGINE SETUP
+        // ==========================================
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x87ceeb);
+
+        const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('game-canvas').appendChild(renderer.domElement);
+
+        // ==========================================
+        // 2. LIGHTING
+        // ==========================================
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5); 
+        scene.add(ambientLight);
+
+        const sunLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        sunLight.position.set(10, 20, 10);
+        scene.add(sunLight);
+
+        // ==========================================
+        // 3. PLACING ASSETS
+        // ==========================================
+        // Ground Plane
+        const groundGeo = new THREE.PlaneGeometry(50, 50);
+        const groundMat = new THREE.MeshStandardMaterial({ color: 0x55aa55 });
+        const ground = new THREE.Mesh(groundGeo, groundMat);
+        ground.rotation.x = -Math.PI / 2;
+        scene.add(ground);
+
+        // Player Cube
+        const playerGeo = new THREE.BoxGeometry(1, 1, 1);
+        const playerMat = new THREE.MeshStandardMaterial({ color: 0x3333ff });
+        const player = new THREE.Mesh(playerGeo, playerMat);
+        player.position.y = 0.5;
+        scene.add(player);
+
+        // Environmental Asset Placeholders (Red Trees)
+        const treeGeo = new THREE.ConeGeometry(0.5, 2, 8);
+        const treeMat = new THREE.MeshStandardMaterial({ color: 0xff3333 });
+        
+        for (let i = 0; i < 5; i++) {
+            const tree = new THREE.Mesh(treeGeo, treeMat);
+            tree.position.x = (Math.random() - 0.5) * 40; 
+            tree.position.z = (Math.random() - 0.5) * 40;
+            tree.position.y = 1;
+            scene.add(tree);
+        }
+
+        // ==========================================
+        // 4. MOVEMENT & CAMERA ROTATION VARIABLES
+        // ==========================================
+        const speed = 0.15;
+        
+        // CAMERA ANGLES:
+        // cameraAngle: Stores the current orbital angle around the player (in radians)
+        // cameraDistance: How far back the camera sits from the player
+        // cameraHeight: How high above the player the camera sits
+        let cameraAngle = 0; 
+        const cameraDistance = 15;
+        const cameraHeight = 12;
+        const rotateSpeed = 0.03; // Speed of camera rotation per frame
+
+        const dirs = { 
+            up: false, down: false, left: false, right: false,
+            camLeft: false, camRight: false 
+        };
+
+        // Helper function to bind touch/click events to UI buttons
+        function bindButton(id, dirKey) {
+            const btn = document.getElementById(id);
+            const start = (e) => { e.preventDefault(); dirs[dirKey] = true; };
+            const stop = (e) => { e.preventDefault(); dirs[dirKey] = false; };
+            
+            btn.addEventListener('touchstart', start);
+            btn.addEventListener('mousedown', start);
+            btn.addEventListener('touchend', stop);
+            btn.addEventListener('mouseup', stop);
+            btn.addEventListener('mouseleave', stop);
+        }
+
+        bindButton('btn-up', 'up');
+        bindButton('btn-down', 'down');
+        bindButton('btn-left', 'left');
+        bindButton('btn-right', 'right');
+        bindButton('btn-cam-left', 'camLeft');
+        bindButton('btn-cam-right', 'camRight');
+
+        // ==========================================
+        // 5. ENGINE LOOP (UPDATED FOR RELATIVE MOVEMENT)
+        // ==========================================
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // A. UPDATE CAMERA ROTATION ANGLE
+            if (dirs.camLeft) cameraAngle -= rotateSpeed;
+            if (dirs.camRight) cameraAngle += rotateSpeed;
+
+            // B. RELATIVE MOVEMENT MATH
+            // When the camera rotates, pressing "UP" should move the player forward RELATIVE to where the camera is facing!
+            // We use Trigonometry (Sin & Cos) to translate the D-Pad inputs based on cameraAngle.
+            if (dirs.up) {
+                player.position.x -= Math.sin(cameraAngle) * speed;
+                player.position.z -= Math.cos(cameraAngle) * speed;
+            }
+            if (dirs.down) {
+                player.position.x += Math.sin(cameraAngle) * speed;
+                player.position.z += Math.cos(cameraAngle) * speed;
+            }
+            if (dirs.left) {
+                player.position.x -= Math.cos(cameraAngle) * speed;
+                player.position.z += Math.sin(cameraAngle) * speed;
+            }
+            if (dirs.right) {
+                player.position.x += Math.cos(cameraAngle) * speed;
+                player.position.z -= Math.sin(cameraAngle) * speed;
+            }
+
+            // C. CALCULATE CAMERA 3D ORBIT POSITION
+            // We place the camera on            align-items: center;
             user-select: none; /* Stops the text from being highlighted when tapped */
         }
         
