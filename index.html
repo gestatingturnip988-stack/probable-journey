@@ -120,12 +120,12 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
         }
 
         .radial-actions {
             display: flex;
-            gap: 8px;
+            gap: 6px;
             align-items: center;
         }
 
@@ -158,6 +158,14 @@
             height: 38px;
             border-radius: 50%;
             font-size: 14px;
+        }
+
+        .mode-btn {
+            height: 38px;
+            padding: 0 8px;
+            border-radius: 18px;
+            font-size: 10px;
+            background: rgba(0, 255, 204, 0.85);
         }
 
         .btn:active { background: #00ffcc !important; }
@@ -255,4 +263,392 @@
             overflow-y: auto;
         }
     </style>
-    <script src="https://cdnjs.
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+    <div id="hud-top-left">Pos: 0.0, 0.0 | Mode: FREE</div>
+    <div id="mobile-log"></div>
+    <div id="canvas-container"></div>
+
+    <div class="top-right-menu">
+        <button id="btn-menu" class="menu-btn">☰</button>
+        <button id="btn-inventory" class="menu-btn">🎒</button>
+    </div>
+
+    <div id="hotbar">
+        <div class="hotbar-slot"><span class="icon">🪵</span><span class="count" id="count-wood">0</span></div>
+        <div class="hotbar-slot"><span class="icon">🪨</span><span class="count" id="count-stone">0</span></div>
+        <div class="hotbar-slot"><span class="icon">🫐</span><span class="count" id="count-berry">0</span></div>
+        <div class="hotbar-slot"><span class="icon">🍄</span><span class="count" id="count-shroom">0</span></div>
+    </div>
+
+    <div class="controls-right">
+        <div class="radial-actions">
+            <button id="btn-cam-left" class="btn cam-btn">↺</button>
+            <button id="btn-cam-mode" class="btn mode-btn">🔒 FREE</button>
+            <button id="btn-action-1" class="btn action-btn">HIT 🪓</button>
+            <button id="btn-cam-right" class="btn cam-btn">↻</button>
+        </div>
+        <div id="joystick-base">
+            <div id="joystick-knob"></div>
+        </div>
+    </div>
+
+    <div id="inventory-modal">
+        <h3>🎒 INVENTORY</h3>
+        <div class="inv-grid">
+            <div class="inv-slot">🪵 Wood<br><b id="inv-wood">0</b></div>
+            <div class="inv-slot">🪨 Stone<br><b id="inv-stone">0</b></div>
+            <div class="inv-slot">🫐 Berries<br><b id="inv-berry">0</b></div>
+            <div class="inv-slot">🍄 Shrooms<br><b id="inv-shroom">0</b></div>
+            <div class="inv-slot">EMPTY</div>
+            <div class="inv-slot">EMPTY</div>
+        </div>
+        <button id="close-inv-btn">CLOSE</button>
+    </div>
+
+    <script>
+        function showMobileError(msg) {
+            const logEl = document.getElementById('mobile-log');
+            logEl.style.display = 'block';
+            logEl.innerText += '[ERR] ' + msg + '\n';
+        }
+
+        window.onerror = function(msg, url, lineNo) {
+            showMobileError(msg + " (line " + lineNo + ")");
+            return false;
+        };
+
+        try {
+            const hud = document.getElementById('hud-top-left');
+            const inventory = { wood: 0, stone: 0, berry: 0, shroom: 0 };
+
+            function updateInventoryUI() {
+                document.getElementById('count-wood').innerText = inventory.wood;
+                document.getElementById('count-stone').innerText = inventory.stone;
+                document.getElementById('count-berry').innerText = inventory.berry;
+                document.getElementById('count-shroom').innerText = inventory.shroom;
+
+                document.getElementById('inv-wood').innerText = inventory.wood;
+                document.getElementById('inv-stone').innerText = inventory.stone;
+                document.getElementById('inv-berry').innerText = inventory.berry;
+                document.getElementById('inv-shroom').innerText = inventory.shroom;
+            }
+
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a1a24);
+
+            const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 10, 14);
+            camera.lookAt(0, 0, 0);
+
+            const renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
+            dirLight.position.set(20, 40, 20);
+            scene.add(dirLight);
+
+            const WORLD_SIZE = 120;
+            const HALF_WORLD = WORLD_SIZE / 2;
+
+            const grid = new THREE.GridHelper(WORLD_SIZE, 60, 0x00ffcc, 0x334433);
+            scene.add(grid);
+
+            const ground = new THREE.Mesh(
+                new THREE.PlaneGeometry(WORLD_SIZE, WORLD_SIZE),
+                new THREE.MeshStandardMaterial({ color: 0x182e18 })
+            );
+            ground.rotation.x = -Math.PI / 2;
+            scene.add(ground);
+
+            const playerRadius = 0.6;
+            const playerGroup = new THREE.Group();
+
+            const playerCube = new THREE.Mesh(
+                new THREE.BoxGeometry(1.2, 1.2, 1.2),
+                new THREE.MeshStandardMaterial({ color: 0x3388ff })
+            );
+            playerCube.position.y = 0.6;
+            playerGroup.add(playerCube);
+
+            const playerPointer = new THREE.Mesh(
+                new THREE.BoxGeometry(0.3, 0.3, 0.3),
+                new THREE.MeshStandardMaterial({ color: 0xff3333 })
+            );
+            playerPointer.position.set(0, 0.6, -0.7);
+            playerGroup.add(playerPointer);
+
+            scene.add(playerGroup);
+
+            const harvestables = [];
+            const droppedItems = [];
+
+            function createTree(x, z) {
+                const group = new THREE.Group();
+                const trunk = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.2, 0.3, 1),
+                    new THREE.MeshStandardMaterial({ color: 0x5c4033 })
+                );
+                trunk.position.y = 0.5;
+                group.add(trunk);
+
+                const leaves = new THREE.Mesh(
+                    new THREE.ConeGeometry(1.2, 2.5, 6),
+                    new THREE.MeshStandardMaterial({ color: 0x2e8b57 })
+                );
+                leaves.position.y = 2.0;
+                group.add(leaves);
+
+                group.position.set(x, 0, z);
+                scene.add(group);
+
+                harvestables.push({ mesh: group, type: 'tree', dropType: 'wood', hp: 3, x: x, z: z, radius: 0.9 });
+            }
+
+            function createBoulder(x, z) {
+                const rock = new THREE.Mesh(
+                    new THREE.DodecahedronGeometry(1, 1),
+                    new THREE.MeshStandardMaterial({ color: 0x777788, flatShading: true })
+                );
+                rock.position.set(x, 0.7, z);
+                scene.add(rock);
+
+                harvestables.push({ mesh: rock, type: 'boulder', dropType: 'stone', hp: 4, x: x, z: z, radius: 1.0 });
+            }
+
+            function createBush(x, z) {
+                const bush = new THREE.Mesh(
+                    new THREE.IcosahedronGeometry(0.8, 1),
+                    new THREE.MeshStandardMaterial({ color: 0x3a9d23, flatShading: true })
+                );
+                bush.position.set(x, 0.5, z);
+                scene.add(bush);
+
+                harvestables.push({ mesh: bush, type: 'bush', dropType: 'berry', hp: 2, x: x, z: z, radius: 0.7 });
+            }
+
+            function spawnDrop(x, z, itemType) {
+                let color = 0x8b5a2b;
+                if (itemType === 'stone') color = 0xaaaaaa;
+                if (itemType === 'berry') color = 0xff0055;
+
+                const dropMesh = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.4, 0.4, 0.4),
+                    new THREE.MeshStandardMaterial({ color: color })
+                );
+                dropMesh.position.set(x, 0.2, z);
+                scene.add(dropMesh);
+
+                droppedItems.push({ mesh: dropMesh, type: itemType, x: x, z: z });
+            }
+
+            function populateNodes() {
+                for (let i = 0; i < 40; i++) {
+                    const x = (Math.random() - 0.5) * (WORLD_SIZE - 15);
+                    const z = (Math.random() - 0.5) * (WORLD_SIZE - 15);
+                    if (Math.hypot(x, z) < 6) continue;
+
+                    const r = Math.random();
+                    if (r < 0.5) createTree(x, z);
+                    else if (r < 0.8) createBoulder(x, z);
+                    else createBush(x, z);
+                }
+            }
+            populateNodes();
+
+            function checkCollisions(targetX, targetZ) {
+                const boundaryLimit = HALF_WORLD - 1.0;
+                if (Math.abs(targetX) > boundaryLimit || Math.abs(targetZ) > boundaryLimit) return true;
+
+                for (let h of harvestables) {
+                    if (Math.hypot(targetX - h.x, targetZ - h.z) < (playerRadius + h.radius)) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            function performHitAction() {
+                const hitRange = 2.0;
+                for (let i = harvestables.length - 1; i >= 0; i--) {
+                    const h = harvestables[i];
+                    const dist = Math.hypot(playerGroup.position.x - h.x, playerGroup.position.z - h.z);
+
+                    if (dist <= (playerRadius + h.radius + hitRange)) {
+                        h.hp--;
+                        h.mesh.position.x += (Math.random() - 0.5) * 0.2;
+
+                        if (h.hp <= 0) {
+                            scene.remove(h.mesh);
+                            spawnDrop(h.x, h.z, h.dropType);
+                            harvestables.splice(i, 1);
+                        }
+                        return;
+                    }
+                }
+            }
+
+            function updateDrops() {
+                for (let i = droppedItems.length - 1; i >= 0; i--) {
+                    const item = droppedItems[i];
+                    const dist = Math.hypot(playerGroup.position.x - item.x, playerGroup.position.z - item.z);
+
+                    if (dist < 1.5) {
+                        inventory[item.type] = (inventory[item.type] || 0) + 1;
+                        updateInventoryUI();
+
+                        scene.remove(item.mesh);
+                        droppedItems.splice(i, 1);
+                    }
+                }
+            }
+
+            // --- VIRTUAL JOYSTICK & CAMERA MODE TOGGLE ---
+            let joystickVector = { x: 0, y: 0 };
+            const baseEl = document.getElementById('joystick-base');
+            const knobEl = document.getElementById('joystick-knob');
+            const maxRadius = 45;
+
+            function handleJoystickMove(e) {
+                e.preventDefault();
+                const touch = e.touches ? e.touches[0] : e;
+                const rect = baseEl.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+
+                let dx = touch.clientX - centerX;
+                let dy = touch.clientY - centerY;
+                const dist = Math.hypot(dx, dy);
+
+                if (dist > maxRadius) {
+                    dx = (dx / dist) * maxRadius;
+                    dy = (dy / dist) * maxRadius;
+                }
+
+                knobEl.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+                
+                if (dist < 6) {
+                    joystickVector = { x: 0, y: 0 };
+                } else {
+                    joystickVector = { x: dx / maxRadius, y: dy / maxRadius };
+                }
+            }
+
+            function resetJoystick(e) {
+                if (e) e.preventDefault();
+                knobEl.style.transform = `translate(-50%, -50%)`;
+                joystickVector = { x: 0, y: 0 };
+            }
+
+            baseEl.addEventListener('touchstart', handleJoystickMove, { passive: false });
+            baseEl.addEventListener('touchmove', handleJoystickMove, { passive: false });
+            baseEl.addEventListener('touchend', resetJoystick, { passive: false });
+            baseEl.addEventListener('touchcancel', resetJoystick, { passive: false });
+
+            // Camera Toggle State: 'FREE' or 'AUTO'
+            let isAutoCam = false;
+            const camModeBtn = document.getElementById('btn-cam-mode');
+            camModeBtn.onclick = () => {
+                isAutoCam = !isAutoCam;
+                camModeBtn.innerText = isAutoCam ? '🎥 AUTO' : '🔒 FREE';
+                camModeBtn.style.background = isAutoCam ? '#ffaa00' : 'rgba(0, 255, 204, 0.85)';
+            };
+
+            let camRotInput = 0;
+            function bindCamButton(id, val) {
+                const btn = document.getElementById(id);
+                btn.addEventListener('touchstart', (e) => { e.preventDefault(); camRotInput = val; }, { passive: false });
+                btn.addEventListener('touchend', (e) => { e.preventDefault(); camRotInput = 0; }, { passive: false });
+            }
+            bindCamButton('btn-cam-left', -1);
+            bindCamButton('btn-cam-right', 1);
+
+            document.getElementById('btn-action-1').onclick = performHitAction;
+
+            const invModal = document.getElementById('inventory-modal');
+            document.getElementById('btn-inventory').onclick = () => { invModal.style.display = 'block'; };
+            document.getElementById('close-inv-btn').onclick = () => { invModal.style.display = 'none'; };
+
+            // GAME LOOP
+            const clock = new THREE.Clock();
+            const moveSpeed = 8;
+            const camRotateSpeed = 2.0;
+
+            let cameraAngle = 0;
+            const cameraDistance = 14;
+            const cameraHeight = 10;
+
+            function animate() {
+                requestAnimationFrame(animate);
+
+                const delta = clock.getDelta();
+                const moveStep = moveSpeed * delta;
+                const rotStep = camRotateSpeed * delta;
+
+                // Manual Camera Rotation (Takes priority over auto)
+                if (camRotInput !== 0) {
+                    cameraAngle += camRotInput * rotStep;
+                }
+
+                const jx = joystickVector.x;
+                const jy = joystickVector.y;
+
+                if (Math.abs(jx) > 0.05 || Math.abs(jy) > 0.05) {
+                    const worldDx = (jx * Math.cos(cameraAngle) + jy * Math.sin(cameraAngle)) * moveStep;
+                    const worldDz = (-jx * Math.sin(cameraAngle) + jy * Math.cos(cameraAngle)) * moveStep;
+
+                    const nextX = playerGroup.position.x + worldDx;
+                    const nextZ = playerGroup.position.z + worldDz;
+
+                    if (!checkCollisions(nextX, playerGroup.position.z)) {
+                        playerGroup.position.x = nextX;
+                    }
+                    if (!checkCollisions(playerGroup.position.x, nextZ)) {
+                        playerGroup.position.z = nextZ;
+                    }
+
+                    const targetAngle = Math.atan2(worldDx, worldDz);
+                    playerGroup.rotation.y = targetAngle;
+
+                    // Smooth Auto-Follow camera when enabled and not manually rotating
+                    if (isAutoCam && camRotInput === 0) {
+                        const desiredCamAngle = targetAngle + Math.PI;
+                        let angleDiff = desiredCamAngle - cameraAngle;
+                        angleDiff = Math.atan2(Math.sin(angleDiff), Math.cos(angleDiff));
+                        cameraAngle += angleDiff * delta * 1.5;
+                    }
+                }
+
+                updateDrops();
+
+                camera.position.x = playerGroup.position.x + Math.sin(cameraAngle) * cameraDistance;
+                camera.position.z = playerGroup.position.z + Math.cos(cameraAngle) * cameraDistance;
+                camera.position.y = playerGroup.position.y + cameraHeight;
+                camera.lookAt(playerGroup.position.x, playerGroup.position.y + 0.6, playerGroup.position.z);
+
+                hud.innerText = `X: ${playerGroup.position.x.toFixed(1)}, Z: ${playerGroup.position.z.toFixed(1)} | Cam Mode: ${isAutoCam ? 'AUTO' : 'FREE'}`;
+
+                renderer.render(scene, camera);
+            }
+
+            animate();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+
+        } catch (err) {
+            showMobileError(err.message);
+        }
+    </script>
+</body>
+</html>
