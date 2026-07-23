@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3D Console RPG - Beach Landing Prototype</title>
+    <title>3D Console RPG - Low-Poly Player Update</title>
     <style>
         * {
             box-sizing: border-box;
@@ -249,7 +249,7 @@
             color: #00ffcc;
         }
 
-        /* Targeted Creature HUD (Facets/Stats Hidden) */
+        /* Targeted Creature HUD */
         #target-info-overlay {
             position: absolute;
             top: 15px;
@@ -437,7 +437,6 @@
         .craft-recipe-info b { color: #00ffcc; font-size: 12px; }
         .craft-recipe-info div { font-size: 9px; color: #aaa; margin-top: 2px; }
         .craft-btn { background: #00ffcc; color: #000; border: none; padding: 6px 10px; border-radius: 4px; font-weight: bold; font-size: 10px; cursor: pointer; }
-        .craft-btn:disabled { background: #444; color: #888; cursor: not-allowed; }
 
         #mobile-log { position: absolute; top: 45px; left: 10px; right: 10px; color: #ff5555; background: rgba(0,0,0,0.85); padding: 6px; font-size: 10px; z-index: 100; display: none; border-radius: 4px; max-height: 80px; overflow-y: auto; }
     </style>
@@ -571,7 +570,7 @@
                         <button class="craft-btn" id="btn-craft-wall" onclick="craftItem('wall')">CRAFT</button>
                     </div>
                 </div>
-                <div class="tab-content" id="tab-skills" style="display:none; color:#aaa; font-size:10px;" id="ui-skills-text">
+                <div class="tab-content" id="tab-skills" style="display:none; color:#aaa; font-size:10px;">
                     --
                 </div>
             </div>
@@ -620,6 +619,126 @@
         function startGame() {
             document.getElementById('creation-screen').style.display = 'none';
             initGameEngine();
+        }
+
+        // --- PROCEDURAL PLAYER MESH GENERATOR (FROM YOUR SKETCHES) ---
+        function createPlayerMesh(gender, characterClass) {
+            const playerGroup = new THREE.Group();
+            const isMale = (gender === 'MALE');
+
+            const skinMat = new THREE.MeshStandardMaterial({ color: 0xffcc99, flatShading: true });
+            const hairMat = new THREE.MeshStandardMaterial({ color: 0x4a2e18, flatShading: true });
+            const shirtMat = new THREE.MeshStandardMaterial({ color: 0x334455, flatShading: true });
+            const pantsMat = new THREE.MeshStandardMaterial({ color: 0x222222, flatShading: true });
+            const leatherMat = new THREE.MeshStandardMaterial({ color: 0x663311, flatShading: true });
+            const metalMat = new THREE.MeshStandardMaterial({ color: 0x99aabb, metalness: 0.6, roughness: 0.3, flatShading: true });
+
+            const headRadius = 0.35;
+            const shoulderWidth = isMale ? 0.85 : 0.72;
+            const hipWidth = isMale ? 0.55 : 0.60;
+            const torsoHeight = 0.9;
+            const legLength = 1.0;
+
+            // 1. Head & Spiky Anime Hair
+            const headGroup = new THREE.Group();
+            const headGeo = new THREE.DodecahedronGeometry(headRadius, 1);
+            headGeo.scale(1, 1.15, 0.95);
+            const headMesh = new THREE.Mesh(headGeo, skinMat);
+            headGroup.add(headMesh);
+
+            const spikeCount = isMale ? 14 : 18;
+            for (let i = 0; i < spikeCount; i++) {
+                const spikeGeo = new THREE.ConeGeometry(0.12, 0.45, 4);
+                const spike = new THREE.Mesh(spikeGeo, hairMat);
+                const phi = Math.random() * Math.PI * 0.8;
+                const theta = Math.random() * Math.PI * 2;
+                spike.position.set(
+                    (headRadius * 0.9) * Math.sin(phi) * Math.cos(theta),
+                    0.15 + (headRadius * 0.8) * Math.cos(phi),
+                    (headRadius * 0.9) * Math.sin(phi) * Math.sin(theta)
+                );
+                spike.rotation.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5);
+                headGroup.add(spike);
+            }
+            headGroup.position.y = legLength + torsoHeight + (headRadius * 1.1);
+            playerGroup.add(headGroup);
+
+            // 2. Torso, Tank Top & Belt
+            const torsoGeo = new THREE.CylinderGeometry(shoulderWidth * 0.5, hipWidth * 0.5, torsoHeight, 6);
+            const torsoMesh = new THREE.Mesh(torsoGeo, shirtMat);
+            torsoMesh.position.y = legLength + (torsoHeight / 2);
+            playerGroup.add(torsoMesh);
+
+            const beltMesh = new THREE.Mesh(new THREE.CylinderGeometry(hipWidth * 0.52, hipWidth * 0.52, 0.1, 8), leatherMat);
+            beltMesh.position.y = legLength + 0.05;
+            playerGroup.add(beltMesh);
+
+            const pouchMesh = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.18, 0.12), leatherMat);
+            pouchMesh.position.set(hipWidth * 0.48, legLength + 0.05, 0);
+            playerGroup.add(pouchMesh);
+
+            // 3. Legs & Boots
+            const legGeo = new THREE.CylinderGeometry(0.12, 0.09, legLength, 6);
+            const leftLeg = new THREE.Mesh(legGeo, pantsMat);
+            leftLeg.position.set(-hipWidth * 0.28, legLength / 2, 0);
+            const rightLeg = new THREE.Mesh(legGeo, pantsMat);
+            rightLeg.position.set(hipWidth * 0.28, legLength / 2, 0);
+
+            const bootGeo = new THREE.BoxGeometry(0.2, 0.22, 0.35);
+            const leftBoot = new THREE.Mesh(bootGeo, leatherMat);
+            leftBoot.position.set(-hipWidth * 0.28, 0.11, 0.06);
+            const rightBoot = new THREE.Mesh(bootGeo, leatherMat);
+            rightBoot.position.set(hipWidth * 0.28, 0.11, 0.06);
+
+            playerGroup.add(leftLeg, rightLeg, leftBoot, rightBoot);
+
+            // 4. Arms & Class/Sketch Stance
+            const armGeo = new THREE.CylinderGeometry(0.09, 0.07, 0.75, 6);
+            if (!isMale) {
+                // Female Axe-Slung Pose
+                const leftArm = new THREE.Mesh(armGeo, skinMat);
+                leftArm.position.set(-shoulderWidth * 0.52, legLength + 0.45, 0);
+                
+                const rightArm = new THREE.Mesh(armGeo, skinMat);
+                rightArm.position.set(shoulderWidth * 0.45, legLength + 0.6, 0.1);
+                rightArm.rotation.z = -Math.PI / 3;
+                rightArm.rotation.x = Math.PI / 4;
+
+                const axeGroup = new THREE.Group();
+                const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.4), leatherMat);
+                const blade = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.35, 0.25), metalMat);
+                blade.position.set(0, 0.6, 0.1);
+                axeGroup.add(handle, blade);
+                axeGroup.position.set(0.2, legLength + 0.85, -0.1);
+                axeGroup.rotation.z = Math.PI / 3;
+
+                playerGroup.add(leftArm, rightArm, axeGroup);
+            } else {
+                // Male Sword Stance
+                const leftArm = new THREE.Mesh(armGeo, skinMat);
+                leftArm.position.set(-shoulderWidth * 0.3, legLength + 0.5, 0.25);
+                leftArm.rotation.x = -Math.PI / 4;
+                leftArm.rotation.z = Math.PI / 8;
+
+                const rightArm = new THREE.Mesh(armGeo, skinMat);
+                rightArm.position.set(shoulderWidth * 0.3, legLength + 0.5, 0.25);
+                rightArm.rotation.x = -Math.PI / 4;
+                rightArm.rotation.z = -Math.PI / 8;
+
+                const swordGroup = new THREE.Group();
+                const blade = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.3, 0.04), metalMat);
+                blade.position.y = 0.65;
+                const guard = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.08, 0.08), metalMat);
+                guard.position.y = 1.3;
+                const hilt = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.35), leatherMat);
+                hilt.position.y = 1.5;
+                
+                swordGroup.add(blade, guard, hilt);
+                swordGroup.position.set(0, 0, 0.45);
+                playerGroup.add(leftArm, rightArm, swordGroup);
+            }
+
+            return playerGroup;
         }
 
         // --- MAIN ENGINE ---
@@ -677,7 +796,7 @@
                 document.getElementById('tab-btn-skills').classList.toggle('active', tabName === 'skills');
             };
 
-            // --- 3D Scene & World Generation ---
+            // --- 3D Scene ---
             const scene = new THREE.Scene();
             scene.background = new THREE.Color(0x87ceeb);
             scene.fog = new THREE.FogExp2(0x87ceeb, 0.012);
@@ -694,23 +813,13 @@
             sunLight.position.set(30, 60, 20);
             scene.add(sunLight);
 
-            // Terrain Generation: Beach -> Forest -> Mountains
+            // Terrain Generation
             const WORLD_SIZE = 140;
             function getTerrainHeight(x, z) {
-                // Ocean / Beach shore line at Z > 30
-                if (z > 35) return -0.5; // Water height
-                let height = 0;
-                if (z > 20) {
-                    // Sandy beach shore
-                    height = (35 - z) * 0.1;
-                } else if (z < -30) {
-                    // Mountain range in the background
-                    height = Math.abs(z + 30) * 0.6 + Math.sin(x * 0.2) * 4.0;
-                } else {
-                    // Coastal Forest hills
-                    height = Math.sin(x * 0.08) * Math.cos(z * 0.08) * 2.5 + 1.0;
-                }
-                return height;
+                if (z > 35) return -0.5;
+                if (z > 20) return (35 - z) * 0.1;
+                if (z < -30) return Math.abs(z + 30) * 0.6 + Math.sin(x * 0.2) * 4.0;
+                return Math.sin(x * 0.08) * Math.cos(z * 0.08) * 2.5 + 1.0;
             }
 
             const groundGeo = new THREE.PlaneGeometry(WORLD_SIZE, WORLD_SIZE, 50, 50);
@@ -721,28 +830,17 @@
             for (let i = 0; i < pos.count; i++) {
                 const x = pos.getX(i);
                 const z = pos.getZ(i);
-                const y = getTerrainHeight(x, z);
-                pos.setY(i, y);
+                pos.setY(i, getTerrainHeight(x, z));
 
-                // Procedural Terrain Colors (Sand, Grass, Rock)
-                if (z > 20) {
-                    colors.push(0.9, 0.85, 0.55); // Sand
-                } else if (z < -30) {
-                    colors.push(0.5, 0.5, 0.55);  // Mountain Rock
-                } else {
-                    colors.push(0.28, 0.52, 0.28); // Forest Grass
-                }
+                if (z > 20) colors.push(0.9, 0.85, 0.55);
+                else if (z < -30) colors.push(0.5, 0.5, 0.55);
+                else colors.push(0.28, 0.52, 0.28);
             }
             groundGeo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
             groundGeo.computeVertexNormals();
 
-            const groundMesh = new THREE.Mesh(
-                groundGeo, 
-                new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true })
-            );
-            scene.add(groundMesh);
+            scene.add(new THREE.Mesh(groundGeo, new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true })));
 
-            // Ocean Water Plane
             const waterMesh = new THREE.Mesh(
                 new THREE.PlaneGeometry(WORLD_SIZE, 40),
                 new THREE.MeshStandardMaterial({ color: 0x1e90ff, transparent: true, opacity: 0.7 })
@@ -751,26 +849,9 @@
             waterMesh.position.set(0, -0.2, 45);
             scene.add(waterMesh);
 
-            // --- Player Character ---
-            const playerGroup = new THREE.Group();
+            // --- Player Avatar Creation ---
             const PLAYER_RADIUS = 0.5;
-
-            const bodyColor = (playerGender === 'MALE') ? 0x2266cc : 0xcc22aa;
-            const bodyMesh = new THREE.Mesh(
-                new THREE.BoxGeometry(0.7, 1.2, 0.5),
-                new THREE.MeshStandardMaterial({ color: bodyColor, flatShading: true })
-            );
-            bodyMesh.position.y = 0.9;
-            playerGroup.add(bodyMesh);
-
-            const headMesh = new THREE.Mesh(
-                new THREE.BoxGeometry(0.5, 0.5, 0.5),
-                new THREE.MeshStandardMaterial({ color: 0xffcc99, flatShading: true })
-            );
-            headMesh.position.y = 1.75;
-            playerGroup.add(headMesh);
-
-            // Start player on the Beach shore
+            const playerGroup = createPlayerMesh(playerGender, playerClass);
             playerGroup.position.set(0, getTerrainHeight(0, 28), 28);
             scene.add(playerGroup);
 
@@ -785,19 +866,7 @@
             targetRing.visible = false;
             scene.add(targetRing);
 
-            // --- Shipwreck & Wreckage Chest ---
-            const boatGroup = new THREE.Group();
-            const hull = new THREE.Mesh(
-                new THREE.BoxGeometry(3.5, 1.2, 7.0),
-                new THREE.MeshStandardMaterial({ color: 0x4a2e18, flatShading: true })
-            );
-            hull.rotation.z = 0.3;
-            hull.rotation.y = 0.4;
-            boatGroup.add(hull);
-            boatGroup.position.set(6, getTerrainHeight(6, 30) + 0.4, 30);
-            scene.add(boatGroup);
-
-            // Treasure Chest
+            // Wreckage Chest
             let chestLooted = false;
             const chestMesh = new THREE.Mesh(
                 new THREE.BoxGeometry(1.0, 0.8, 0.8),
@@ -806,11 +875,9 @@
             chestMesh.position.set(3.5, getTerrainHeight(3.5, 28) + 0.4, 28);
             scene.add(chestMesh);
 
-            // --- Environmental Objects & Structures ---
             const harvestables = [];
             const obstacleColliders = [];
 
-            // Add Chest to interactables
             const chestData = { isChest: true, mesh: chestMesh, x: 3.5, z: 28, radius: 0.8 };
             harvestables.push(chestData);
             obstacleColliders.push(chestData);
@@ -821,32 +888,22 @@
                 let propRadius = 0.8;
 
                 if (type === 'tree') {
-                    const trunk = new THREE.Mesh(
-                        new THREE.CylinderGeometry(0.4, 0.6, 3.5), 
-                        new THREE.MeshStandardMaterial({ color: 0x5a3d28, flatShading: true })
-                    );
+                    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.6, 3.5), new THREE.MeshStandardMaterial({ color: 0x5a3d28, flatShading: true }));
                     trunk.position.y = 1.75;
-                    const foliage = new THREE.Mesh(
-                        new THREE.ConeGeometry(2.2, 5.0, 6), 
-                        new THREE.MeshStandardMaterial({ color: 0x2e8b57, flatShading: true })
-                    );
+                    const foliage = new THREE.Mesh(new THREE.ConeGeometry(2.2, 5.0, 6), new THREE.MeshStandardMaterial({ color: 0x2e8b57, flatShading: true }));
                     foliage.position.y = 5.0;
                     g.add(trunk, foliage);
                     dropType = 'wood';
                     propRadius = 1.0;
-                } else if (type === 'stone') {
-                    const rock = new THREE.Mesh(
-                        new THREE.DodecahedronGeometry(1.2, 1), 
-                        new THREE.MeshStandardMaterial({ color: 0x778899, flatShading: true })
-                    );
+                } else {
+                    const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(1.2, 1), new THREE.MeshStandardMaterial({ color: 0x778899, flatShading: true }));
                     rock.position.y = 0.8;
                     g.add(rock);
                     dropType = 'stone';
                     propRadius = 1.1;
                 }
 
-                const groundY = getTerrainHeight(x, z);
-                g.position.set(x, groundY, z);
+                g.position.set(x, getTerrainHeight(x, z), z);
                 scene.add(g);
 
                 const itemData = { isCreature: false, mesh: g, dropType, hp: 3, x, z, radius: propRadius };
@@ -854,16 +911,13 @@
                 obstacleColliders.push(itemData);
             }
 
-            // Populate Forest inland
             for (let i = 0; i < 40; i++) {
                 const rx = (Math.random() - 0.5) * 80;
-                const rz = (Math.random() * -40) + 10; // Inland forest
-                const r = Math.random();
-                if (r < 0.6) spawnProp('tree', rx, rz);
-                else spawnProp('stone', rx, rz);
+                const rz = (Math.random() * -40) + 10;
+                spawnProp(Math.random() < 0.6 ? 'tree' : 'stone', rx, rz);
             }
 
-            // --- AUTONOMOUS CREATURE ENGINE ---
+            // Creature Class & System
             const creatures = [];
             const projectiles = [];
             const traps = [];
@@ -873,38 +927,26 @@
                     this.isCreature = true;
                     this.name = template.name;
                     this.temperament = template.temperament;
-                    this.type = template.type;
-                    this.element = template.element;
-                    
                     this.hp = template.hp;
                     this.maxHp = template.hp;
                     this.state = 'IDLE';
-
                     this.radius = template.radius || 0.9;
                     this.speed = template.speed || 2.5;
-
                     this.x = template.x;
                     this.z = template.z;
 
-                    // AI Pathing / Autonomous Movement Variables
                     this.targetX = this.x;
                     this.targetZ = this.z;
                     this.changeTargetTimer = 0;
                     this.rootedTimer = 0;
 
                     this.group = new THREE.Group();
-                    const cBody = new THREE.Mesh(
-                        new THREE.BoxGeometry(1.0, 0.9, 1.4),
-                        new THREE.MeshStandardMaterial({ color: template.color || 0xcc4444, flatShading: true })
-                    );
+                    const cBody = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.9, 1.4), new THREE.MeshStandardMaterial({ color: template.color || 0xcc4444, flatShading: true }));
                     cBody.position.y = 0.5;
                     this.group.add(cBody);
 
-                    const gY = getTerrainHeight(this.x, this.z);
-                    this.group.position.set(this.x, gY, this.z);
+                    this.group.position.set(this.x, getTerrainHeight(this.x, this.z), this.z);
                     scene.add(this.group);
-
-                    this.mesh = this.group;
                 }
 
                 takeDamage(amt) {
@@ -924,16 +966,10 @@
 
                 update(delta, playerPos) {
                     if (this.hp <= 0) return;
-
-                    if (this.rootedTimer > 0) {
-                        this.rootedTimer -= delta;
-                        return; // Trapped, cannot move
-                    }
+                    if (this.rootedTimer > 0) { this.rootedTimer -= delta; return; }
 
                     this.x = this.group.position.x;
                     this.z = this.group.position.z;
-
-                    const distToPlayer = Math.hypot(playerPos.x - this.x, playerPos.z - this.z);
 
                     if (this.state === 'HOSTILE') {
                         this.targetX = playerPos.x;
@@ -941,8 +977,7 @@
                     } else if (this.state === 'FLEEING') {
                         this.targetX = this.x + (this.x - playerPos.x);
                         this.targetZ = this.z + (this.z - playerPos.z);
-                    } else if (this.state === 'IDLE') {
-                        // Pick random autonomous roaming point
+                    } else {
                         this.changeTargetTimer -= delta;
                         if (this.changeTargetTimer <= 0) {
                             this.targetX = this.x + (Math.random() - 0.5) * 20;
@@ -951,7 +986,6 @@
                         }
                     }
 
-                    // Move toward target path point
                     const dx = this.targetX - this.x;
                     const dz = this.targetZ - this.z;
                     const distToTarget = Math.hypot(dx, dz);
@@ -961,12 +995,11 @@
                         const moveX = this.x + Math.sin(angle) * this.speed * delta;
                         const moveZ = this.z + Math.cos(angle) * this.speed * delta;
 
-                        // Obstacle Collision Avoidance
                         let blocked = false;
                         for (let obs of obstacleColliders) {
                             if (obs !== this && Math.hypot(moveX - obs.x, moveZ - obs.z) < (this.radius + obs.radius)) {
                                 blocked = true;
-                                this.changeTargetTimer = 0; // Pick new target if blocked
+                                this.changeTargetTimer = 0;
                                 break;
                             }
                         }
@@ -982,20 +1015,15 @@
                 }
             }
 
-            // Spawn Initial Autonomous Creatures in Forest
-            const boar = new AutonomousCreature({ name: 'Forest Boar', temperament: 'WARY', type: 'STRIKING', element: 'EARTH', hp: 25, x: -10, z: -5 });
-            const stag = new AutonomousCreature({ name: 'Meadow Stag', temperament: 'DOCILE', type: 'SPECIAL', element: 'WIND', hp: 15, x: 12, z: 0 });
+            const boar = new AutonomousCreature({ name: 'Forest Boar', temperament: 'WARY', hp: 25, x: -10, z: -5 });
+            const stag = new AutonomousCreature({ name: 'Meadow Stag', temperament: 'DOCILE', hp: 15, x: 12, z: 0 });
             creatures.push(boar, stag);
             harvestables.push(boar, stag);
             obstacleColliders.push(boar, stag);
 
-            // --- CLASS ATTACK & SKILL HANDLERS ---
-            const attackBtn = document.getElementById('btn-attack');
-            const skillBtn = document.getElementById('btn-skill');
-
-            function performPrimaryAttack() {
+            // Controls & Combat
+            document.getElementById('btn-attack').onclick = () => {
                 if (playerClass === 'BRAWLER') {
-                    // Melee Strike
                     for (let h of harvestables) {
                         if (Math.hypot(playerGroup.position.x - h.x, playerGroup.position.z - h.z) < 2.2) {
                             if (h.isCreature) h.takeDamage(8);
@@ -1003,62 +1031,36 @@
                             break;
                         }
                     }
-                } else if (playerClass === 'HUNTER' || playerClass === 'MAGE') {
-                    // Spawn Ranged Projectile
+                } else {
                     const pGeo = (playerClass === 'MAGE') ? new THREE.SphereGeometry(0.3) : new THREE.CylinderGeometry(0.05, 0.05, 0.8);
-                    const pMat = new THREE.MeshBasicMaterial({ color: (playerClass === 'MAGE') ? 0x00ffff : 0xffaa00 });
-                    const proj = new THREE.Mesh(pGeo, pMat);
-
+                    const proj = new THREE.Mesh(pGeo, new THREE.MeshBasicMaterial({ color: (playerClass === 'MAGE') ? 0x00ffff : 0xffaa00 }));
                     proj.position.copy(playerGroup.position);
                     proj.position.y += 1.2;
                     proj.rotation.y = playerGroup.rotation.y;
                     scene.add(proj);
-
-                    projectiles.push({
-                        mesh: proj,
-                        dirX: Math.sin(playerGroup.rotation.y),
-                        dirZ: Math.cos(playerGroup.rotation.y),
-                        speed: 18.0,
-                        life: 1.5,
-                        damage: 6
-                    });
+                    projectiles.push({ mesh: proj, dirX: Math.sin(playerGroup.rotation.y), dirZ: Math.cos(playerGroup.rotation.y), speed: 18.0, life: 1.5, damage: 6 });
                 }
-            }
+            };
 
-            function performClassSkill() {
+            document.getElementById('btn-skill').onclick = () => {
                 if (playerClass === 'HUNTER') {
-                    // Lay Bear Trap
-                    const trapMesh = new THREE.Mesh(
-                        new THREE.CylinderGeometry(0.6, 0.6, 0.1),
-                        new THREE.MeshStandardMaterial({ color: 0x333333 })
-                    );
+                    const trapMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 0.1), new THREE.MeshStandardMaterial({ color: 0x333333 }));
                     trapMesh.position.set(playerGroup.position.x, getTerrainHeight(playerGroup.position.x, playerGroup.position.z) + 0.05, playerGroup.position.z);
                     scene.add(trapMesh);
                     traps.push({ mesh: trapMesh, x: playerGroup.position.x, z: playerGroup.position.z });
                 } else if (playerClass === 'MAGE') {
-                    // Spell 2: Area Blast
-                    const blast = new THREE.Mesh(
-                        new THREE.RingGeometry(0.5, 3.5, 16),
-                        new THREE.MeshBasicMaterial({ color: 0xff00ff, side: THREE.DoubleSide })
-                    );
+                    const blast = new THREE.Mesh(new THREE.RingGeometry(0.5, 3.5, 16), new THREE.MeshBasicMaterial({ color: 0xff00ff, side: THREE.DoubleSide }));
                     blast.rotation.x = -Math.PI / 2;
                     blast.position.set(playerGroup.position.x, getTerrainHeight(playerGroup.position.x, playerGroup.position.z) + 0.1, playerGroup.position.z);
                     scene.add(blast);
-
                     setTimeout(() => scene.remove(blast), 400);
 
                     creatures.forEach(c => {
-                        if (Math.hypot(playerGroup.position.x - c.x, playerGroup.position.z - c.z) < 3.8) {
-                            c.takeDamage(12);
-                        }
+                        if (Math.hypot(playerGroup.position.x - c.x, playerGroup.position.z - c.z) < 3.8) c.takeDamage(12);
                     });
                 }
-            }
+            };
 
-            attackBtn.onclick = performPrimaryAttack;
-            skillBtn.onclick = performClassSkill;
-
-            // Chest & Harvesting Interactions
             document.getElementById('btn-interact').onclick = () => {
                 if (!chestLooted && Math.hypot(playerGroup.position.x - chestData.x, playerGroup.position.z - chestData.z) < 2.5) {
                     chestLooted = true;
@@ -1069,11 +1071,9 @@
                 }
             };
 
-            document.getElementById('btn-jump').onclick = () => {
-                if (isGrounded) { playerVY = 0.24; isGrounded = false; }
-            };
+            document.getElementById('btn-jump').onclick = () => { if (isGrounded) { playerVY = 0.24; isGrounded = false; } };
 
-            // Joystick Logic
+            // Joystick
             let joystickVector = { x: 0, y: 0 };
             const baseEl = document.getElementById('joystick-base');
             const knobEl = document.getElementById('joystick-knob');
@@ -1091,36 +1091,18 @@
                 joystickVector = dist < 5 ? { x: 0, y: 0 } : { x: dx / maxR, y: dy / maxR };
             }
 
-            function resetJoystick() {
-                knobEl.style.transform = `translate(-50%, -50%)`;
-                joystickVector = { x: 0, y: 0 };
-            }
-
             baseEl.addEventListener('pointerdown', (e) => { baseEl.setPointerCapture(e.pointerId); handleJoystick(e); });
             baseEl.addEventListener('pointermove', (e) => { if (baseEl.hasPointerCapture(e.pointerId)) handleJoystick(e); });
-            baseEl.addEventListener('pointerup', (e) => { baseEl.releasePointerCapture(e.pointerId); resetJoystick(); });
+            baseEl.addEventListener('pointerup', (e) => { baseEl.releasePointerCapture(e.pointerId); knobEl.style.transform = `translate(-50%, -50%)`; joystickVector = { x: 0, y: 0 }; });
 
-            // Camera Controls
-            let isAutoCam = false;
             let cameraAngle = 0;
             let camRotInput = 0;
 
-            const camModeBtn = document.getElementById('btn-cam-mode');
-            camModeBtn.onclick = () => {
-                isAutoCam = !isAutoCam;
-                camModeBtn.innerText = isAutoCam ? '🎥 AUTO' : '🔒 FREE';
-                camModeBtn.style.background = isAutoCam ? '#ffaa00' : 'rgba(0, 255, 204, 0.85)';
-            };
+            document.getElementById('btn-cam-left').addEventListener('pointerdown', () => camRotInput = -1);
+            document.getElementById('btn-cam-left').addEventListener('pointerup', () => camRotInput = 0);
+            document.getElementById('btn-cam-right').addEventListener('pointerdown', () => camRotInput = 1);
+            document.getElementById('btn-cam-right').addEventListener('pointerup', () => camRotInput = 0);
 
-            function bindCam(id, val) {
-                const b = document.getElementById(id);
-                b.addEventListener('pointerdown', () => camRotInput = val);
-                b.addEventListener('pointerup', () => camRotInput = 0);
-            }
-            bindCam('btn-cam-left', -1);
-            bindCam('btn-cam-right', 1);
-
-            // Modal Handlers
             const menuModal = document.getElementById('menu-modal');
             document.getElementById('btn-menu-open').onclick = () => { updateUI(); menuModal.style.display = 'flex'; };
             document.getElementById('btn-menu-close').onclick = () => { menuModal.style.display = 'none'; };
@@ -1128,19 +1110,14 @@
             updateUI();
 
             function canMoveTo(nextX, nextZ) {
-                const halfBoundary = (WORLD_SIZE / 2) - 1.5;
-                if (Math.abs(nextX) > halfBoundary || Math.abs(nextZ) > halfBoundary) return false;
-
+                if (Math.abs(nextX) > (WORLD_SIZE / 2 - 1.5) || Math.abs(nextZ) > (WORLD_SIZE / 2 - 1.5)) return false;
                 for (let obj of obstacleColliders) {
                     if (Math.hypot(nextX - obj.x, nextZ - obj.z) < (PLAYER_RADIUS + obj.radius)) return false;
                 }
                 return true;
             }
 
-            // --- Main Game Loop ---
             const clock = new THREE.Clock();
-            const CAM_DISTANCE = 8.0;
-            const CAM_HEIGHT = 3.5;
 
             function animate() {
                 requestAnimationFrame(animate);
@@ -1152,37 +1129,26 @@
                 const jy = joystickVector.y;
 
                 if (Math.abs(jx) > 0.05 || Math.abs(jy) > 0.05) {
-                    const moveSpeed = 7.5;
-                    const dx = (jx * Math.cos(cameraAngle) + jy * Math.sin(cameraAngle)) * moveSpeed * delta;
-                    const dz = (-jx * Math.sin(cameraAngle) + jy * Math.cos(cameraAngle)) * moveSpeed * delta;
+                    const dx = (jx * Math.cos(cameraAngle) + jy * Math.sin(cameraAngle)) * 7.5 * delta;
+                    const dz = (-jx * Math.sin(cameraAngle) + jy * Math.cos(cameraAngle)) * 7.5 * delta;
 
-                    const nextX = playerGroup.position.x + dx;
-                    const nextZ = playerGroup.position.z + dz;
+                    if (canMoveTo(playerGroup.position.x + dx, playerGroup.position.z)) playerGroup.position.x += dx;
+                    if (canMoveTo(playerGroup.position.x, playerGroup.position.z + dz)) playerGroup.position.z += dz;
 
-                    if (canMoveTo(nextX, playerGroup.position.z)) playerGroup.position.x = nextX;
-                    if (canMoveTo(playerGroup.position.x, nextZ)) playerGroup.position.z = nextZ;
-
-                    const targetAngle = Math.atan2(dx, dz);
-                    playerGroup.rotation.y = targetAngle;
+                    playerGroup.rotation.y = Math.atan2(dx, dz);
                 }
 
-                const groundY = getTerrainHeight(playerGroup.position.x, playerGroup.position.z);
+                const gY = getTerrainHeight(playerGroup.position.x, playerGroup.position.z);
                 if (isGrounded) {
-                    playerGroup.position.y = groundY;
+                    playerGroup.position.y = gY;
                 } else {
                     playerGroup.position.y += playerVY;
                     playerVY -= 0.8 * delta;
-                    if (playerGroup.position.y <= groundY) {
-                        playerGroup.position.y = groundY;
-                        playerVY = 0;
-                        isGrounded = true;
-                    }
+                    if (playerGroup.position.y <= gY) { playerGroup.position.y = gY; playerVY = 0; isGrounded = true; }
                 }
 
-                // Update Creatures
                 creatures.forEach(c => c.update(delta, playerGroup.position));
 
-                // Projectiles Update
                 for (let i = projectiles.length - 1; i >= 0; i--) {
                     const p = projectiles[i];
                     p.life -= delta;
@@ -1196,19 +1162,14 @@
                             break;
                         }
                     }
-
-                    if (p.life <= 0) {
-                        scene.remove(p.mesh);
-                        projectiles.splice(i, 1);
-                    }
+                    if (p.life <= 0) { scene.remove(p.mesh); projectiles.splice(i, 1); }
                 }
 
-                // Bear Traps Update
                 for (let i = traps.length - 1; i >= 0; i--) {
                     const t = traps[i];
                     for (let c of creatures) {
                         if (Math.hypot(t.x - c.x, t.z - c.z) < 1.0) {
-                            c.rootedTimer = 4.0; // Root for 4s
+                            c.rootedTimer = 4.0;
                             c.takeDamage(5);
                             scene.remove(t.mesh);
                             traps.splice(i, 1);
@@ -1217,7 +1178,6 @@
                     }
                 }
 
-                // Target HUD Overlay (Hidden Stats Facet)
                 let closest = null;
                 let minDist = 3.5;
                 harvestables.forEach(h => {
@@ -1242,10 +1202,9 @@
                     targetOverlay.style.display = 'none';
                 }
 
-                // Camera Position
-                camera.position.x = playerGroup.position.x + Math.sin(cameraAngle) * CAM_DISTANCE;
-                camera.position.z = playerGroup.position.z + Math.cos(cameraAngle) * CAM_DISTANCE;
-                camera.position.y = playerGroup.position.y + CAM_HEIGHT;
+                camera.position.x = playerGroup.position.x + Math.sin(cameraAngle) * 8.0;
+                camera.position.z = playerGroup.position.z + Math.cos(cameraAngle) * 8.0;
+                camera.position.y = playerGroup.position.y + 3.5;
                 camera.lookAt(playerGroup.position.x, playerGroup.position.y + 1.2, playerGroup.position.z);
 
                 renderer.render(scene, camera);
@@ -1261,4 +1220,5 @@
         }
     </script>
 </body>
-</html>
+                            </html>
+                              
