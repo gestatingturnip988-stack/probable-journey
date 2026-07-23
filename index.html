@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3D Console RPG World</title>
+    <title>3D Console RPG - Beach Landing Prototype</title>
     <style>
         * {
             box-sizing: border-box;
@@ -29,6 +29,92 @@
             top: 0;
             left: 0;
             z-index: 1;
+        }
+
+        /* --- TITLE & CHAR CREATION SCREENS --- */
+        .overlay-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(10, 15, 25, 0.95);
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            padding: 20px;
+        }
+
+        .screen-title {
+            font-size: 24px;
+            color: #00ffcc;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            text-align: center;
+            text-shadow: 0 0 10px rgba(0,255,204,0.5);
+        }
+
+        .creation-container {
+            background: rgba(20, 30, 45, 0.8);
+            border: 2px solid #00ffcc;
+            border-radius: 12px;
+            padding: 20px;
+            width: 100%;
+            max-width: 450px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-label {
+            font-size: 11px;
+            color: #8899aa;
+            text-transform: uppercase;
+        }
+
+        .btn-option-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .option-btn {
+            flex: 1;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid #445566;
+            color: #fff;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 12px;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .option-btn.active {
+            background: rgba(0, 255, 204, 0.2);
+            border-color: #00ffcc;
+            color: #00ffcc;
+        }
+
+        .start-btn {
+            background: #00ffcc;
+            color: #000;
+            border: none;
+            padding: 14px;
+            font-weight: bold;
+            font-size: 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
         }
 
         /* --- HUD OVERLAYS --- */
@@ -85,10 +171,10 @@
             transition: width 0.15s ease-out;
         }
 
-        .bar-fill.exp { background: #00ffaa; width: 45%; }
+        .bar-fill.exp { background: #00ffaa; width: 0%; }
         .bar-fill.hp { background: #ff3344; width: 100%; }
         .bar-fill.energy { background: #ffcc00; width: 100%; }
-        .bar-fill.hunger { background: #a66a38; width: 65%; }
+        .bar-fill.hunger { background: #a66a38; width: 100%; }
 
         .bar-label {
             position: absolute;
@@ -131,7 +217,7 @@
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            gap: 6px;
+            gap: 5px;
             z-index: 10;
             background: rgba(0,0,0,0.6);
             padding: 6px;
@@ -140,8 +226,8 @@
         }
 
         .hotbar-slot {
-            width: 42px;
-            height: 42px;
+            width: 38px;
+            height: 38px;
             background: rgba(255,255,255,0.15);
             border: 2px solid #aaa;
             border-radius: 6px;
@@ -150,18 +236,38 @@
             align-items: center;
             justify-content: center;
             color: #fff;
-            font-size: 10px;
+            font-size: 9px;
             position: relative;
         }
 
-        .hotbar-slot .icon { font-size: 14px; }
+        .hotbar-slot .icon { font-size: 13px; }
         .hotbar-slot .count {
             position: absolute;
-            bottom: 2px;
-            right: 4px;
+            bottom: 1px;
+            right: 3px;
             font-weight: bold;
             color: #00ffcc;
         }
+
+        /* Targeted Creature HUD (Facets/Stats Hidden) */
+        #target-info-overlay {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(10, 15, 25, 0.9);
+            border: 2px solid #00ffcc;
+            border-radius: 8px;
+            padding: 8px 16px;
+            color: #fff;
+            z-index: 10;
+            display: none;
+            text-align: center;
+            min-width: 200px;
+        }
+
+        #target-info-overlay .target-name { font-weight: bold; font-size: 13px; color: #00ffcc; }
+        #target-info-overlay .target-status { font-size: 10px; color: #ffcc00; margin-top: 2px; }
 
         /* --- RIGHT CONTROLS --- */
         .controls-right {
@@ -175,17 +281,8 @@
             gap: 6px;
         }
 
-        .camera-utility-row {
-            display: flex;
-            gap: 6px;
-        }
-
-        .radial-action-arc {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            align-items: flex-end;
-        }
+        .camera-utility-row { display: flex; gap: 6px; }
+        .radial-action-arc { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
 
         .btn {
             background: rgba(255, 255, 255, 0.85);
@@ -202,7 +299,7 @@
         }
 
         .action-btn {
-            width: 72px;
+            width: 76px;
             height: 38px;
             border-radius: 18px;
             background: #ffaa00;
@@ -215,21 +312,8 @@
         }
 
         .action-btn:active { background: #00ffcc; }
-
-        .cam-btn {
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            font-size: 14px;
-        }
-
-        .mode-btn {
-            height: 38px;
-            padding: 0 8px;
-            border-radius: 18px;
-            font-size: 10px;
-            background: rgba(0, 255, 204, 0.85);
-        }
+        .cam-btn { width: 38px; height: 38px; border-radius: 50%; font-size: 14px; }
+        .mode-btn { height: 38px; padding: 0 8px; border-radius: 18px; font-size: 10px; background: rgba(0, 255, 204, 0.85); }
 
         #joystick-base {
             width: 110px;
@@ -284,29 +368,9 @@
             border-bottom: 2px solid #334455;
         }
 
-        .menu-header h2 {
-            margin: 0;
-            color: #00ffcc;
-            font-size: 14px;
-            letter-spacing: 1px;
-        }
-
-        .close-btn {
-            background: #ff4444;
-            color: #fff;
-            border: none;
-            padding: 4px 12px;
-            border-radius: 4px;
-            font-weight: bold;
-            font-size: 11px;
-            cursor: pointer;
-        }
-
-        .menu-body {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-        }
+        .menu-header h2 { margin: 0; color: #00ffcc; font-size: 14px; letter-spacing: 1px; }
+        .close-btn { background: #ff4444; color: #fff; border: none; padding: 4px 12px; border-radius: 4px; font-weight: bold; font-size: 11px; cursor: pointer; }
+        .menu-body { display: flex; flex: 1; overflow: hidden; }
 
         .equipment-panel {
             width: 48%;
@@ -318,42 +382,10 @@
             align-items: center;
         }
 
-        .paperdoll-container {
-            display: grid;
-            grid-template-columns: 50px 1fr 50px;
-            gap: 8px;
-            width: 100%;
-            height: 100%;
-            align-items: center;
-        }
-
-        .equip-column {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            justify-content: center;
-        }
-
-        .equip-slot {
-            width: 44px;
-            height: 44px;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid #667788;
-            border-radius: 6px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-        }
-
-        .equip-slot .slot-label {
-            font-size: 7px;
-            color: #8899aa;
-            position: absolute;
-            top: 2px;
-            left: 3px;
-        }
+        .paperdoll-container { display: grid; grid-template-columns: 50px 1fr 50px; gap: 8px; width: 100%; height: 100%; align-items: center; }
+        .equip-column { display: flex; flex-direction: column; gap: 6px; justify-content: center; }
+        .equip-slot { width: 44px; height: 44px; background: rgba(255, 255, 255, 0.08); border: 1px solid #667788; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+        .equip-slot .slot-label { font-size: 7px; color: #8899aa; position: absolute; top: 2px; left: 3px; }
 
         .character-avatar-box {
             background: rgba(0, 0, 0, 0.4);
@@ -369,46 +401,12 @@
             text-align: center;
         }
 
-        .inventory-panel {
-            width: 52%;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .tab-bar {
-            display: flex;
-            background: rgba(10, 14, 22, 0.8);
-            border-bottom: 1px solid #334455;
-        }
-
-        .tab-btn {
-            flex: 1;
-            padding: 8px 4px;
-            background: transparent;
-            border: none;
-            color: #8899aa;
-            font-size: 12px;
-            text-align: center;
-            cursor: pointer;
-        }
-
-        .tab-btn.active {
-            color: #00ffcc;
-            border-bottom: 2px solid #00ffcc;
-            background: rgba(0, 255, 204, 0.1);
-        }
-
-        .tab-content {
-            flex: 1;
-            padding: 10px;
-            overflow-y: auto;
-        }
-
-        .inv-grid-large {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 6px;
-        }
+        .inventory-panel { width: 52%; display: flex; flex-direction: column; }
+        .tab-bar { display: flex; background: rgba(10, 14, 22, 0.8); border-bottom: 1px solid #334455; }
+        .tab-btn { flex: 1; padding: 8px 4px; background: transparent; border: none; color: #8899aa; font-size: 11px; text-align: center; cursor: pointer; }
+        .tab-btn.active { color: #00ffcc; border-bottom: 2px solid #00ffcc; background: rgba(0, 255, 204, 0.1); }
+        .tab-content { flex: 1; padding: 10px; overflow-y: auto; }
+        .inv-grid-large { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 
         .inv-item-slot {
             aspect-ratio: 1;
@@ -423,15 +421,7 @@
             font-size: 10px;
             position: relative;
         }
-
-        .inv-item-slot .qty {
-            position: absolute;
-            bottom: 2px;
-            right: 4px;
-            font-size: 9px;
-            color: #00ffcc;
-            font-weight: bold;
-        }
+        .inv-item-slot .qty { position: absolute; bottom: 2px; right: 4px; font-size: 9px; color: #00ffcc; font-weight: bold; }
 
         .craft-recipe {
             background: rgba(255, 255, 255, 0.05);
@@ -446,51 +436,61 @@
 
         .craft-recipe-info b { color: #00ffcc; font-size: 12px; }
         .craft-recipe-info div { font-size: 9px; color: #aaa; margin-top: 2px; }
+        .craft-btn { background: #00ffcc; color: #000; border: none; padding: 6px 10px; border-radius: 4px; font-weight: bold; font-size: 10px; cursor: pointer; }
+        .craft-btn:disabled { background: #444; color: #888; cursor: not-allowed; }
 
-        .craft-btn {
-            background: #00ffcc;
-            color: #000;
-            border: none;
-            padding: 6px 10px;
-            border-radius: 4px;
-            font-weight: bold;
-            font-size: 10px;
-            cursor: pointer;
-        }
-
-        .craft-btn:disabled {
-            background: #444;
-            color: #888;
-            cursor: not-allowed;
-        }
-
-        #mobile-log {
-            position: absolute;
-            top: 45px;
-            left: 10px;
-            right: 10px;
-            color: #ff5555;
-            background: rgba(0,0,0,0.85);
-            padding: 6px;
-            font-size: 10px;
-            z-index: 100;
-            display: none;
-            border-radius: 4px;
-            max-height: 80px;
-            overflow-y: auto;
-        }
+        #mobile-log { position: absolute; top: 45px; left: 10px; right: 10px; color: #ff5555; background: rgba(0,0,0,0.85); padding: 6px; font-size: 10px; z-index: 100; display: none; border-radius: 4px; max-height: 80px; overflow-y: auto; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 
     <div id="mobile-log"></div>
+
+    <div id="title-screen" class="overlay-screen">
+        <div class="screen-title">UNEXPLORED ISLE</div>
+        <button class="start-btn" onclick="showCharacterCreation()" style="width: 200px;">START GAME</button>
+    </div>
+
+    <div id="creation-screen" class="overlay-screen" style="display:none;">
+        <div class="screen-title">CREATE YOUR HERO</div>
+        <div class="creation-container">
+            <div class="form-group">
+                <span class="form-label">Select Gender</span>
+                <div class="btn-option-group">
+                    <button class="option-btn active" id="btn-g-m" onclick="selectGender('MALE')">Male</button>
+                    <button class="option-btn" id="btn-g-f" onclick="selectGender('FEMALE')">Female</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <span class="form-label">Select Class</span>
+                <div class="btn-option-group">
+                    <button class="option-btn active" id="btn-c-brawler" onclick="selectClass('BRAWLER')">Brawler (Striking)</button>
+                    <button class="option-btn" id="btn-c-hunter" onclick="selectClass('HUNTER')">Hunter (Ranged)</button>
+                    <button class="option-btn" id="btn-c-mage" onclick="selectClass('MAGE')">Mage (Special)</button>
+                </div>
+            </div>
+
+            <div id="class-desc" style="font-size: 10px; color: #aaa; line-height: 1.4; height: 36px;">
+                Brawlers focus on raw power and close-range striking force.
+            </div>
+
+            <button class="start-btn" onclick="startGame()">BEGIN ADVENTURE</button>
+        </div>
+    </div>
+
     <div id="canvas-container"></div>
+
+    <div id="target-info-overlay">
+        <div class="target-name" id="target-name-lbl">Creature Name</div>
+        <div class="target-status" id="target-status-lbl">Condition: Healthy</div>
+    </div>
 
     <div id="hud-bottom-left">
         <div id="minimap-box">MAP</div>
         <div id="status-bars">
-            <div class="bar-container"><div class="bar-fill exp"></div><span class="bar-label">EXP Lv.5</span></div>
+            <div class="bar-container"><div class="bar-fill exp"></div><span class="bar-label">EXP Lv.1</span></div>
             <div class="bar-container"><div class="bar-fill hp" id="bar-hp"></div><span class="bar-label">HEALTH</span></div>
             <div class="bar-container"><div class="bar-fill energy" id="bar-energy"></div><span class="bar-label">ENERGY</span></div>
             <div class="bar-container"><div class="bar-fill hunger"></div><span class="bar-label">HUNGER</span></div>
@@ -502,10 +502,11 @@
     </div>
 
     <div id="hotbar">
+        <div class="hotbar-slot"><span class="icon">🪓</span><span class="count" id="count-hatchet">0</span></div>
+        <div class="hotbar-slot"><span class="icon">🔪</span><span class="count" id="count-knife">0</span></div>
         <div class="hotbar-slot"><span class="icon">🪵</span><span class="count" id="count-wood">0</span></div>
         <div class="hotbar-slot"><span class="icon">🪨</span><span class="count" id="count-stone">0</span></div>
-        <div class="hotbar-slot"><span class="icon">🫐</span><span class="count" id="count-berry">0</span></div>
-        <div class="hotbar-slot"><span class="icon">🍄</span><span class="count" id="count-shroom">0</span></div>
+        <div class="hotbar-slot"><span class="icon">🥩</span><span class="count" id="count-meat">0</span></div>
     </div>
 
     <div class="controls-right">
@@ -517,6 +518,7 @@
 
         <div class="radial-action-arc">
             <button id="btn-attack" class="btn action-btn">ATTACK ⚔️</button>
+            <button id="btn-skill" class="btn action-btn">SKILL ✨</button>
             <button id="btn-interact" class="btn action-btn">INTERACT 🤝</button>
             <button id="btn-jump" class="btn action-btn">JUMP 🦘</button>
         </div>
@@ -535,14 +537,14 @@
             <div class="equipment-panel">
                 <div class="paperdoll-container">
                     <div class="equip-column">
-                        <div class="equip-slot"><span class="slot-label">MAIN</span><span>🪓</span></div>
+                        <div class="equip-slot"><span class="slot-label">MAIN</span><span id="equip-weapon-icon">👊</span></div>
                         <div class="equip-slot"><span class="slot-label">HEAD</span></div>
                         <div class="equip-slot"><span class="slot-label">CHEST</span></div>
                     </div>
                     <div class="character-avatar-box">
-                        <div style="font-size: 40px; margin-bottom: 4px;">🧍</div>
-                        <b>Generic Character</b>
-                        <span style="font-size:9px; color:#888;">Lv. 5 Adventurer</span>
+                        <div style="font-size: 38px; margin-bottom: 2px;">🧍</div>
+                        <b id="ui-char-class">BRAWLER</b>
+                        <span style="font-size:8px; color:#888;" id="ui-char-gender">Male Adventurer</span>
                     </div>
                     <div class="equip-column">
                         <div class="equip-slot"><span class="slot-label">OFF</span></div>
@@ -555,7 +557,7 @@
                 <div class="tab-bar">
                     <button class="tab-btn active" id="tab-btn-inv" onclick="switchTab('inv')">🎒 Inventory</button>
                     <button class="tab-btn" id="tab-btn-craft" onclick="switchTab('craft')">🔨 Crafting</button>
-                    <button class="tab-btn" id="tab-btn-skills" onclick="switchTab('skills')">⚡ Skills</button>
+                    <button class="tab-btn" id="tab-btn-skills" onclick="switchTab('skills')">⚡ Spells</button>
                 </div>
                 <div class="tab-content" id="tab-inv">
                     <div class="inv-grid-large" id="inventory-grid"></div>
@@ -568,16 +570,9 @@
                         </div>
                         <button class="craft-btn" id="btn-craft-wall" onclick="craftItem('wall')">CRAFT</button>
                     </div>
-                    <div class="craft-recipe">
-                        <div class="craft-recipe-info">
-                            <b>🪵 Campfire</b>
-                            <div>Requires: 3 Wood, 2 Stone</div>
-                        </div>
-                        <button class="craft-btn" id="btn-craft-campfire" onclick="craftItem('campfire')">CRAFT</button>
-                    </div>
                 </div>
-                <div class="tab-content" id="tab-skills" style="display:none; color:#aaa; font-size:11px;">
-                    <p><b>Lumberjack Lv.2</b> - +10% Wood harvest yield.</p>
+                <div class="tab-content" id="tab-skills" style="display:none; color:#aaa; font-size:10px;" id="ui-skills-text">
+                    --
                 </div>
             </div>
         </div>
@@ -595,30 +590,71 @@
             return false;
         };
 
-        window.addEventListener('DOMContentLoaded', () => {
-            const container = document.getElementById('canvas-container');
-            if (!container) return;
+        // --- GAME STATE ---
+        let playerGender = 'MALE';
+        let playerClass = 'BRAWLER';
 
+        function selectGender(g) {
+            playerGender = g;
+            document.getElementById('btn-g-m').classList.toggle('active', g === 'MALE');
+            document.getElementById('btn-g-f').classList.toggle('active', g === 'FEMALE');
+        }
+
+        function selectClass(c) {
+            playerClass = c;
+            document.getElementById('btn-c-brawler').classList.toggle('active', c === 'BRAWLER');
+            document.getElementById('btn-c-hunter').classList.toggle('active', c === 'HUNTER');
+            document.getElementById('btn-c-mage').classList.toggle('active', c === 'MAGE');
+
+            const desc = document.getElementById('class-desc');
+            if (c === 'BRAWLER') desc.innerText = "Brawlers focus on raw power and close-range striking force.";
+            else if (c === 'HUNTER') desc.innerText = "Hunters use bows at range and lay bear traps to immobilize foes.";
+            else if (c === 'MAGE') desc.innerText = "Mages channel offensive elemental magic through staves and wands.";
+        }
+
+        function showCharacterCreation() {
+            document.getElementById('title-screen').style.display = 'none';
+            document.getElementById('creation-screen').style.display = 'flex';
+        }
+
+        function startGame() {
+            document.getElementById('creation-screen').style.display = 'none';
+            initGameEngine();
+        }
+
+        // --- MAIN ENGINE ---
+        function initGameEngine() {
+            const container = document.getElementById('canvas-container');
             let currentEnergy = 100;
             let currentHP = 100;
-            const inventory = { wood: 0, stone: 0, berry: 0, shroom: 0 };
+            const inventory = { wood: 0, stone: 0, meat: 0, hatchet: 0, knife: 0 };
+
+            document.getElementById('ui-char-class').innerText = playerClass;
+            document.getElementById('ui-char-gender').innerText = playerGender + ' Adventurer';
+
+            let attackIcon = '👊';
+            if (playerClass === 'HUNTER') attackIcon = '🏹';
+            if (playerClass === 'MAGE') attackIcon = '🪄';
+            document.getElementById('equip-weapon-icon').innerText = attackIcon;
 
             function updateUI() {
                 document.getElementById('bar-energy').style.width = currentEnergy + '%';
                 document.getElementById('bar-hp').style.width = currentHP + '%';
                 document.getElementById('count-wood').innerText = inventory.wood;
                 document.getElementById('count-stone').innerText = inventory.stone;
-                document.getElementById('count-berry').innerText = inventory.berry;
-                document.getElementById('count-shroom').innerText = inventory.shroom;
+                document.getElementById('count-meat').innerText = inventory.meat;
+                document.getElementById('count-hatchet').innerText = inventory.hatchet;
+                document.getElementById('count-knife').innerText = inventory.knife;
 
                 const invGrid = document.getElementById('inventory-grid');
                 if (invGrid) {
                     invGrid.innerHTML = '';
                     const items = [
+                        { icon: '🪓', count: inventory.hatchet },
+                        { icon: '🔪', count: inventory.knife },
                         { icon: '🪵', count: inventory.wood },
                         { icon: '🪨', count: inventory.stone },
-                        { icon: '🫐', count: inventory.berry },
-                        { icon: '🍄', count: inventory.shroom }
+                        { icon: '🥩', count: inventory.meat }
                     ];
                     items.forEach(item => {
                         if (item.count > 0) {
@@ -629,13 +665,6 @@
                         }
                     });
                 }
-
-                // Update craft button state based on current inventory
-                const wallBtn = document.getElementById('btn-craft-wall');
-                if (wallBtn) wallBtn.disabled = inventory.wood < 2;
-
-                const campfireBtn = document.getElementById('btn-craft-campfire');
-                if (campfireBtn) campfireBtn.disabled = !(inventory.wood >= 3 && inventory.stone >= 2);
             }
 
             window.switchTab = function(tabName) {
@@ -648,10 +677,10 @@
                 document.getElementById('tab-btn-skills').classList.toggle('active', tabName === 'skills');
             };
 
-            // --- 3D Scene Setup ---
+            // --- 3D Scene & World Generation ---
             const scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x7ec0ee);
-            scene.fog = new THREE.FogExp2(0x7ec0ee, 0.015);
+            scene.background = new THREE.Color(0x87ceeb);
+            scene.fog = new THREE.FogExp2(0x87ceeb, 0.012);
 
             const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 1000);
             
@@ -661,36 +690,75 @@
             container.appendChild(renderer.domElement);
 
             scene.add(new THREE.AmbientLight(0xffffff, 0.75));
-            const sunLight = new THREE.DirectionalLight(0xfffaed, 0.85);
-            sunLight.position.set(25, 50, 15);
+            const sunLight = new THREE.DirectionalLight(0xfffaed, 0.9);
+            sunLight.position.set(30, 60, 20);
             scene.add(sunLight);
 
-            const WORLD_SIZE = 120;
+            // Terrain Generation: Beach -> Forest -> Mountains
+            const WORLD_SIZE = 140;
             function getTerrainHeight(x, z) {
-                return Math.sin(x * 0.08) * Math.cos(z * 0.08) * 2.2;
+                // Ocean / Beach shore line at Z > 30
+                if (z > 35) return -0.5; // Water height
+                let height = 0;
+                if (z > 20) {
+                    // Sandy beach shore
+                    height = (35 - z) * 0.1;
+                } else if (z < -30) {
+                    // Mountain range in the background
+                    height = Math.abs(z + 30) * 0.6 + Math.sin(x * 0.2) * 4.0;
+                } else {
+                    // Coastal Forest hills
+                    height = Math.sin(x * 0.08) * Math.cos(z * 0.08) * 2.5 + 1.0;
+                }
+                return height;
             }
 
-            const groundGeo = new THREE.PlaneGeometry(WORLD_SIZE, WORLD_SIZE, 40, 40);
+            const groundGeo = new THREE.PlaneGeometry(WORLD_SIZE, WORLD_SIZE, 50, 50);
             groundGeo.rotateX(-Math.PI / 2);
             const pos = groundGeo.attributes.position;
+            const colors = [];
+
             for (let i = 0; i < pos.count; i++) {
-                pos.setY(i, getTerrainHeight(pos.getX(i), pos.getZ(i)));
+                const x = pos.getX(i);
+                const z = pos.getZ(i);
+                const y = getTerrainHeight(x, z);
+                pos.setY(i, y);
+
+                // Procedural Terrain Colors (Sand, Grass, Rock)
+                if (z > 20) {
+                    colors.push(0.9, 0.85, 0.55); // Sand
+                } else if (z < -30) {
+                    colors.push(0.5, 0.5, 0.55);  // Mountain Rock
+                } else {
+                    colors.push(0.28, 0.52, 0.28); // Forest Grass
+                }
             }
+            groundGeo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
             groundGeo.computeVertexNormals();
 
             const groundMesh = new THREE.Mesh(
                 groundGeo, 
-                new THREE.MeshStandardMaterial({ color: 0x4a7c4e, flatShading: true })
+                new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true })
             );
             scene.add(groundMesh);
+
+            // Ocean Water Plane
+            const waterMesh = new THREE.Mesh(
+                new THREE.PlaneGeometry(WORLD_SIZE, 40),
+                new THREE.MeshStandardMaterial({ color: 0x1e90ff, transparent: true, opacity: 0.7 })
+            );
+            waterMesh.rotateX(-Math.PI / 2);
+            waterMesh.position.set(0, -0.2, 45);
+            scene.add(waterMesh);
 
             // --- Player Character ---
             const playerGroup = new THREE.Group();
             const PLAYER_RADIUS = 0.5;
 
+            const bodyColor = (playerGender === 'MALE') ? 0x2266cc : 0xcc22aa;
             const bodyMesh = new THREE.Mesh(
                 new THREE.BoxGeometry(0.7, 1.2, 0.5),
-                new THREE.MeshStandardMaterial({ color: 0x3388ff, flatShading: true })
+                new THREE.MeshStandardMaterial({ color: bodyColor, flatShading: true })
             );
             bodyMesh.position.y = 0.9;
             playerGroup.add(bodyMesh);
@@ -702,15 +770,8 @@
             headMesh.position.y = 1.75;
             playerGroup.add(headMesh);
 
-            const pointerMesh = new THREE.Mesh(
-                new THREE.ConeGeometry(0.2, 0.5, 4),
-                new THREE.MeshStandardMaterial({ color: 0xff3333 })
-            );
-            pointerMesh.rotation.x = -Math.PI / 2;
-            pointerMesh.position.set(0, 1.0, 0.6);
-            playerGroup.add(pointerMesh);
-
-            playerGroup.position.set(0, getTerrainHeight(0, 0), 0);
+            // Start player on the Beach shore
+            playerGroup.position.set(0, getTerrainHeight(0, 28), 28);
             scene.add(playerGroup);
 
             let playerVY = 0;
@@ -724,9 +785,35 @@
             targetRing.visible = false;
             scene.add(targetRing);
 
+            // --- Shipwreck & Wreckage Chest ---
+            const boatGroup = new THREE.Group();
+            const hull = new THREE.Mesh(
+                new THREE.BoxGeometry(3.5, 1.2, 7.0),
+                new THREE.MeshStandardMaterial({ color: 0x4a2e18, flatShading: true })
+            );
+            hull.rotation.z = 0.3;
+            hull.rotation.y = 0.4;
+            boatGroup.add(hull);
+            boatGroup.position.set(6, getTerrainHeight(6, 30) + 0.4, 30);
+            scene.add(boatGroup);
+
+            // Treasure Chest
+            let chestLooted = false;
+            const chestMesh = new THREE.Mesh(
+                new THREE.BoxGeometry(1.0, 0.8, 0.8),
+                new THREE.MeshStandardMaterial({ color: 0xffaa00, flatShading: true })
+            );
+            chestMesh.position.set(3.5, getTerrainHeight(3.5, 28) + 0.4, 28);
+            scene.add(chestMesh);
+
             // --- Environmental Objects & Structures ---
             const harvestables = [];
             const obstacleColliders = [];
+
+            // Add Chest to interactables
+            const chestData = { isChest: true, mesh: chestMesh, x: 3.5, z: 28, radius: 0.8 };
+            harvestables.push(chestData);
+            obstacleColliders.push(chestData);
 
             function spawnProp(type, x, z) {
                 const g = new THREE.Group();
@@ -739,7 +826,6 @@
                         new THREE.MeshStandardMaterial({ color: 0x5a3d28, flatShading: true })
                     );
                     trunk.position.y = 1.75;
-                    
                     const foliage = new THREE.Mesh(
                         new THREE.ConeGeometry(2.2, 5.0, 6), 
                         new THREE.MeshStandardMaterial({ color: 0x2e8b57, flatShading: true })
@@ -757,108 +843,234 @@
                     g.add(rock);
                     dropType = 'stone';
                     propRadius = 1.1;
-                } else if (type === 'bush') {
-                    const bush = new THREE.Mesh(
-                        new THREE.IcosahedronGeometry(0.9, 1), 
-                        new THREE.MeshStandardMaterial({ color: 0x3a9d23, flatShading: true })
-                    );
-                    bush.position.y = 0.6;
-                    g.add(bush);
-                    dropType = 'berry';
-                    propRadius = 0.8;
                 }
 
                 const groundY = getTerrainHeight(x, z);
                 g.position.set(x, groundY, z);
                 scene.add(g);
 
-                const itemData = { mesh: g, dropType, hp: 3, x, z, radius: propRadius };
+                const itemData = { isCreature: false, mesh: g, dropType, hp: 3, x, z, radius: propRadius };
                 harvestables.push(itemData);
                 obstacleColliders.push(itemData);
             }
 
-            for (let i = 0; i < 45; i++) {
-                const rx = (Math.random() - 0.5) * 90;
-                const rz = (Math.random() - 0.5) * 90;
-                if (Math.hypot(rx, rz) < 6) continue;
-
+            // Populate Forest inland
+            for (let i = 0; i < 40; i++) {
+                const rx = (Math.random() - 0.5) * 80;
+                const rz = (Math.random() * -40) + 10; // Inland forest
                 const r = Math.random();
-                if (r < 0.5) spawnProp('tree', rx, rz);
-                else if (r < 0.8) spawnProp('stone', rx, rz);
-                else spawnProp('bush', rx, rz);
+                if (r < 0.6) spawnProp('tree', rx, rz);
+                else spawnProp('stone', rx, rz);
             }
 
-            // In-Inventory Crafting Handler
-            window.craftItem = function(itemType) {
-                if (itemType === 'wall' && inventory.wood >= 2) {
-                    inventory.wood -= 2;
-                    updateUI();
+            // --- AUTONOMOUS CREATURE ENGINE ---
+            const creatures = [];
+            const projectiles = [];
+            const traps = [];
 
-                    const wall = new THREE.Mesh(
-                        new THREE.BoxGeometry(2.5, 2.0, 0.4),
-                        new THREE.MeshStandardMaterial({ color: 0x8b5a2b, flatShading: true })
+            class AutonomousCreature {
+                constructor(template) {
+                    this.isCreature = true;
+                    this.name = template.name;
+                    this.temperament = template.temperament;
+                    this.type = template.type;
+                    this.element = template.element;
+                    
+                    this.hp = template.hp;
+                    this.maxHp = template.hp;
+                    this.state = 'IDLE';
+
+                    this.radius = template.radius || 0.9;
+                    this.speed = template.speed || 2.5;
+
+                    this.x = template.x;
+                    this.z = template.z;
+
+                    // AI Pathing / Autonomous Movement Variables
+                    this.targetX = this.x;
+                    this.targetZ = this.z;
+                    this.changeTargetTimer = 0;
+                    this.rootedTimer = 0;
+
+                    this.group = new THREE.Group();
+                    const cBody = new THREE.Mesh(
+                        new THREE.BoxGeometry(1.0, 0.9, 1.4),
+                        new THREE.MeshStandardMaterial({ color: template.color || 0xcc4444, flatShading: true })
                     );
-                    const spawnX = playerGroup.position.x + Math.sin(playerGroup.rotation.y) * 2.2;
-                    const spawnZ = playerGroup.position.z + Math.cos(playerGroup.rotation.y) * 2.2;
-                    wall.position.set(spawnX, getTerrainHeight(spawnX, spawnZ) + 1.0, spawnZ);
-                    wall.rotation.y = playerGroup.rotation.y;
-                    scene.add(wall);
+                    cBody.position.y = 0.5;
+                    this.group.add(cBody);
 
-                    obstacleColliders.push({ x: spawnX, z: spawnZ, radius: 1.2 });
-                } else if (itemType === 'campfire' && inventory.wood >= 3 && inventory.stone >= 2) {
-                    inventory.wood -= 3;
-                    inventory.stone -= 2;
-                    updateUI();
+                    const gY = getTerrainHeight(this.x, this.z);
+                    this.group.position.set(this.x, gY, this.z);
+                    scene.add(this.group);
 
-                    const campfire = new THREE.Mesh(
-                        new THREE.CylinderGeometry(0.8, 0.8, 0.3),
-                        new THREE.MeshStandardMaterial({ color: 0x332211, flatShading: true })
+                    this.mesh = this.group;
+                }
+
+                takeDamage(amt) {
+                    this.hp -= amt;
+                    if (this.hp <= (this.maxHp * 0.1)) this.state = 'SUBMITTED';
+                    else if (this.temperament !== 'DOCILE') this.state = 'HOSTILE';
+                    else this.state = 'FLEEING';
+                }
+
+                getConditionText() {
+                    if (this.state === 'SUBMITTED') return 'Condition: Submissive';
+                    const ratio = this.hp / this.maxHp;
+                    if (ratio > 0.7) return 'Condition: Healthy';
+                    if (ratio > 0.3) return 'Condition: Injured';
+                    return 'Condition: Critical';
+                }
+
+                update(delta, playerPos) {
+                    if (this.hp <= 0) return;
+
+                    if (this.rootedTimer > 0) {
+                        this.rootedTimer -= delta;
+                        return; // Trapped, cannot move
+                    }
+
+                    this.x = this.group.position.x;
+                    this.z = this.group.position.z;
+
+                    const distToPlayer = Math.hypot(playerPos.x - this.x, playerPos.z - this.z);
+
+                    if (this.state === 'HOSTILE') {
+                        this.targetX = playerPos.x;
+                        this.targetZ = playerPos.z;
+                    } else if (this.state === 'FLEEING') {
+                        this.targetX = this.x + (this.x - playerPos.x);
+                        this.targetZ = this.z + (this.z - playerPos.z);
+                    } else if (this.state === 'IDLE') {
+                        // Pick random autonomous roaming point
+                        this.changeTargetTimer -= delta;
+                        if (this.changeTargetTimer <= 0) {
+                            this.targetX = this.x + (Math.random() - 0.5) * 20;
+                            this.targetZ = this.z + (Math.random() - 0.5) * 20;
+                            this.changeTargetTimer = 4 + Math.random() * 5;
+                        }
+                    }
+
+                    // Move toward target path point
+                    const dx = this.targetX - this.x;
+                    const dz = this.targetZ - this.z;
+                    const distToTarget = Math.hypot(dx, dz);
+
+                    if (distToTarget > 0.5 && this.state !== 'SUBMITTED') {
+                        const angle = Math.atan2(dx, dz);
+                        const moveX = this.x + Math.sin(angle) * this.speed * delta;
+                        const moveZ = this.z + Math.cos(angle) * this.speed * delta;
+
+                        // Obstacle Collision Avoidance
+                        let blocked = false;
+                        for (let obs of obstacleColliders) {
+                            if (obs !== this && Math.hypot(moveX - obs.x, moveZ - obs.z) < (this.radius + obs.radius)) {
+                                blocked = true;
+                                this.changeTargetTimer = 0; // Pick new target if blocked
+                                break;
+                            }
+                        }
+
+                        if (!blocked) {
+                            this.group.position.x = moveX;
+                            this.group.position.z = moveZ;
+                            this.group.rotation.y = angle;
+                        }
+                    }
+
+                    this.group.position.y = getTerrainHeight(this.group.position.x, this.group.position.z);
+                }
+            }
+
+            // Spawn Initial Autonomous Creatures in Forest
+            const boar = new AutonomousCreature({ name: 'Forest Boar', temperament: 'WARY', type: 'STRIKING', element: 'EARTH', hp: 25, x: -10, z: -5 });
+            const stag = new AutonomousCreature({ name: 'Meadow Stag', temperament: 'DOCILE', type: 'SPECIAL', element: 'WIND', hp: 15, x: 12, z: 0 });
+            creatures.push(boar, stag);
+            harvestables.push(boar, stag);
+            obstacleColliders.push(boar, stag);
+
+            // --- CLASS ATTACK & SKILL HANDLERS ---
+            const attackBtn = document.getElementById('btn-attack');
+            const skillBtn = document.getElementById('btn-skill');
+
+            function performPrimaryAttack() {
+                if (playerClass === 'BRAWLER') {
+                    // Melee Strike
+                    for (let h of harvestables) {
+                        if (Math.hypot(playerGroup.position.x - h.x, playerGroup.position.z - h.z) < 2.2) {
+                            if (h.isCreature) h.takeDamage(8);
+                            else h.hp--;
+                            break;
+                        }
+                    }
+                } else if (playerClass === 'HUNTER' || playerClass === 'MAGE') {
+                    // Spawn Ranged Projectile
+                    const pGeo = (playerClass === 'MAGE') ? new THREE.SphereGeometry(0.3) : new THREE.CylinderGeometry(0.05, 0.05, 0.8);
+                    const pMat = new THREE.MeshBasicMaterial({ color: (playerClass === 'MAGE') ? 0x00ffff : 0xffaa00 });
+                    const proj = new THREE.Mesh(pGeo, pMat);
+
+                    proj.position.copy(playerGroup.position);
+                    proj.position.y += 1.2;
+                    proj.rotation.y = playerGroup.rotation.y;
+                    scene.add(proj);
+
+                    projectiles.push({
+                        mesh: proj,
+                        dirX: Math.sin(playerGroup.rotation.y),
+                        dirZ: Math.cos(playerGroup.rotation.y),
+                        speed: 18.0,
+                        life: 1.5,
+                        damage: 6
+                    });
+                }
+            }
+
+            function performClassSkill() {
+                if (playerClass === 'HUNTER') {
+                    // Lay Bear Trap
+                    const trapMesh = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.6, 0.6, 0.1),
+                        new THREE.MeshStandardMaterial({ color: 0x333333 })
                     );
-                    const spawnX = playerGroup.position.x + Math.sin(playerGroup.rotation.y) * 1.8;
-                    const spawnZ = playerGroup.position.z + Math.cos(playerGroup.rotation.y) * 1.8;
-                    campfire.position.set(spawnX, getTerrainHeight(spawnX, spawnZ) + 0.15, spawnZ);
-                    scene.add(campfire);
+                    trapMesh.position.set(playerGroup.position.x, getTerrainHeight(playerGroup.position.x, playerGroup.position.z) + 0.05, playerGroup.position.z);
+                    scene.add(trapMesh);
+                    traps.push({ mesh: trapMesh, x: playerGroup.position.x, z: playerGroup.position.z });
+                } else if (playerClass === 'MAGE') {
+                    // Spell 2: Area Blast
+                    const blast = new THREE.Mesh(
+                        new THREE.RingGeometry(0.5, 3.5, 16),
+                        new THREE.MeshBasicMaterial({ color: 0xff00ff, side: THREE.DoubleSide })
+                    );
+                    blast.rotation.x = -Math.PI / 2;
+                    blast.position.set(playerGroup.position.x, getTerrainHeight(playerGroup.position.x, playerGroup.position.z) + 0.1, playerGroup.position.z);
+                    scene.add(blast);
 
-                    obstacleColliders.push({ x: spawnX, z: spawnZ, radius: 0.9 });
+                    setTimeout(() => scene.remove(blast), 400);
+
+                    creatures.forEach(c => {
+                        if (Math.hypot(playerGroup.position.x - c.x, playerGroup.position.z - c.z) < 3.8) {
+                            c.takeDamage(12);
+                        }
+                    });
+                }
+            }
+
+            attackBtn.onclick = performPrimaryAttack;
+            skillBtn.onclick = performClassSkill;
+
+            // Chest & Harvesting Interactions
+            document.getElementById('btn-interact').onclick = () => {
+                if (!chestLooted && Math.hypot(playerGroup.position.x - chestData.x, playerGroup.position.z - chestData.z) < 2.5) {
+                    chestLooted = true;
+                    inventory.hatchet += 1;
+                    inventory.knife += 1;
+                    updateUI();
+                    scene.remove(chestMesh);
                 }
             };
 
-            // Attack & Interact Actions
-            let attackTimer = 0;
-            const attackBtn = document.getElementById('btn-attack');
-            
-            attackBtn.addEventListener('pointerdown', () => attackTimer = Date.now());
-            attackBtn.addEventListener('pointerup', () => {
-                const isPower = (Date.now() - attackTimer) > 300;
-                const reach = isPower ? 2.8 : 2.0;
-
-                for (let i = harvestables.length - 1; i >= 0; i--) {
-                    const h = harvestables[i];
-                    const dist = Math.hypot(playerGroup.position.x - h.x, playerGroup.position.z - h.z);
-                    if (dist < reach) {
-                        h.hp -= isPower ? 2 : 1;
-                        if (h.hp <= 0) {
-                            inventory[h.dropType] += isPower ? 2 : 1;
-                            updateUI();
-                            scene.remove(h.mesh);
-
-                            // Remove from colliders list as well
-                            const colIdx = obstacleColliders.indexOf(h);
-                            if (colIdx !== -1) obstacleColliders.splice(colIdx, 1);
-
-                            harvestables.splice(i, 1);
-                            targetRing.visible = false;
-                        }
-                        break;
-                    }
-                }
-            });
-
             document.getElementById('btn-jump').onclick = () => {
-                if (isGrounded) {
-                    playerVY = 0.24;
-                    isGrounded = false;
-                }
+                if (isGrounded) { playerVY = 0.24; isGrounded = false; }
             };
 
             // Joystick Logic
@@ -888,7 +1100,7 @@
             baseEl.addEventListener('pointermove', (e) => { if (baseEl.hasPointerCapture(e.pointerId)) handleJoystick(e); });
             baseEl.addEventListener('pointerup', (e) => { baseEl.releasePointerCapture(e.pointerId); resetJoystick(); });
 
-            // Camera System
+            // Camera Controls
             let isAutoCam = false;
             let cameraAngle = 0;
             let camRotInput = 0;
@@ -904,80 +1116,54 @@
                 const b = document.getElementById(id);
                 b.addEventListener('pointerdown', () => camRotInput = val);
                 b.addEventListener('pointerup', () => camRotInput = 0);
-                b.addEventListener('pointerleave', () => camRotInput = 0);
             }
             bindCam('btn-cam-left', -1);
             bindCam('btn-cam-right', 1);
 
-            // Modal Controls
+            // Modal Handlers
             const menuModal = document.getElementById('menu-modal');
-            document.getElementById('btn-menu-open').onclick = () => {
-                updateUI();
-                menuModal.style.display = 'flex';
-            };
-            document.getElementById('btn-menu-close').onclick = () => {
-                menuModal.style.display = 'none';
-            };
+            document.getElementById('btn-menu-open').onclick = () => { updateUI(); menuModal.style.display = 'flex'; };
+            document.getElementById('btn-menu-close').onclick = () => { menuModal.style.display = 'none'; };
 
             updateUI();
 
-            // Collision Check Helper
             function canMoveTo(nextX, nextZ) {
                 const halfBoundary = (WORLD_SIZE / 2) - 1.5;
-                if (Math.abs(nextX) > halfBoundary || Math.abs(nextZ) > halfBoundary) {
-                    return false;
-                }
+                if (Math.abs(nextX) > halfBoundary || Math.abs(nextZ) > halfBoundary) return false;
 
                 for (let obj of obstacleColliders) {
-                    const dist = Math.hypot(nextX - obj.x, nextZ - obj.z);
-                    if (dist < (PLAYER_RADIUS + obj.radius)) {
-                        return false;
-                    }
+                    if (Math.hypot(nextX - obj.x, nextZ - obj.z) < (PLAYER_RADIUS + obj.radius)) return false;
                 }
                 return true;
             }
 
-            // --- Main Animation Loop ---
+            // --- Main Game Loop ---
             const clock = new THREE.Clock();
-            const CAM_DISTANCE = 8.5;
-            const CAM_HEIGHT = 4.0;
+            const CAM_DISTANCE = 8.0;
+            const CAM_HEIGHT = 3.5;
 
             function animate() {
                 requestAnimationFrame(animate);
                 const delta = clock.getDelta();
 
-                if (camRotInput !== 0) {
-                    cameraAngle += camRotInput * 2.2 * delta;
-                }
+                if (camRotInput !== 0) cameraAngle += camRotInput * 2.2 * delta;
 
                 const jx = joystickVector.x;
                 const jy = joystickVector.y;
 
                 if (Math.abs(jx) > 0.05 || Math.abs(jy) > 0.05) {
                     const moveSpeed = 7.5;
-
                     const dx = (jx * Math.cos(cameraAngle) + jy * Math.sin(cameraAngle)) * moveSpeed * delta;
                     const dz = (-jx * Math.sin(cameraAngle) + jy * Math.cos(cameraAngle)) * moveSpeed * delta;
 
                     const nextX = playerGroup.position.x + dx;
                     const nextZ = playerGroup.position.z + dz;
 
-                    // Axis-Separated Collision Checking
-                    if (canMoveTo(nextX, playerGroup.position.z)) {
-                        playerGroup.position.x = nextX;
-                    }
-                    if (canMoveTo(playerGroup.position.x, nextZ)) {
-                        playerGroup.position.z = nextZ;
-                    }
+                    if (canMoveTo(nextX, playerGroup.position.z)) playerGroup.position.x = nextX;
+                    if (canMoveTo(playerGroup.position.x, nextZ)) playerGroup.position.z = nextZ;
 
                     const targetAngle = Math.atan2(dx, dz);
                     playerGroup.rotation.y = targetAngle;
-
-                    if (isAutoCam && camRotInput === 0) {
-                        let desiredAngle = targetAngle + Math.PI;
-                        let diff = Math.atan2(Math.sin(desiredAngle - cameraAngle), Math.cos(desiredAngle - cameraAngle));
-                        cameraAngle += diff * delta * 2.5;
-                    }
                 }
 
                 const groundY = getTerrainHeight(playerGroup.position.x, playerGroup.position.z);
@@ -993,29 +1179,74 @@
                     }
                 }
 
+                // Update Creatures
+                creatures.forEach(c => c.update(delta, playerGroup.position));
+
+                // Projectiles Update
+                for (let i = projectiles.length - 1; i >= 0; i--) {
+                    const p = projectiles[i];
+                    p.life -= delta;
+                    p.mesh.position.x += p.dirX * p.speed * delta;
+                    p.mesh.position.z += p.dirZ * p.speed * delta;
+
+                    for (let c of creatures) {
+                        if (Math.hypot(p.mesh.position.x - c.x, p.mesh.position.z - c.z) < 1.2) {
+                            c.takeDamage(p.damage);
+                            p.life = 0;
+                            break;
+                        }
+                    }
+
+                    if (p.life <= 0) {
+                        scene.remove(p.mesh);
+                        projectiles.splice(i, 1);
+                    }
+                }
+
+                // Bear Traps Update
+                for (let i = traps.length - 1; i >= 0; i--) {
+                    const t = traps[i];
+                    for (let c of creatures) {
+                        if (Math.hypot(t.x - c.x, t.z - c.z) < 1.0) {
+                            c.rootedTimer = 4.0; // Root for 4s
+                            c.takeDamage(5);
+                            scene.remove(t.mesh);
+                            traps.splice(i, 1);
+                            break;
+                        }
+                    }
+                }
+
+                // Target HUD Overlay (Hidden Stats Facet)
                 let closest = null;
-                let minDist = 3.0;
+                let minDist = 3.5;
                 harvestables.forEach(h => {
                     const d = Math.hypot(playerGroup.position.x - h.x, playerGroup.position.z - h.z);
                     if (d < minDist) { minDist = d; closest = h; }
                 });
 
+                const targetOverlay = document.getElementById('target-info-overlay');
                 if (closest) {
                     targetRing.position.set(closest.x, getTerrainHeight(closest.x, closest.z) + 0.1, closest.z);
                     targetRing.visible = true;
+
+                    if (closest.isCreature) {
+                        targetOverlay.style.display = 'block';
+                        document.getElementById('target-name-lbl').innerText = closest.name;
+                        document.getElementById('target-status-lbl').innerText = closest.getConditionText();
+                    } else {
+                        targetOverlay.style.display = 'none';
+                    }
                 } else {
                     targetRing.visible = false;
+                    targetOverlay.style.display = 'none';
                 }
 
+                // Camera Position
                 camera.position.x = playerGroup.position.x + Math.sin(cameraAngle) * CAM_DISTANCE;
                 camera.position.z = playerGroup.position.z + Math.cos(cameraAngle) * CAM_DISTANCE;
                 camera.position.y = playerGroup.position.y + CAM_HEIGHT;
-
-                camera.lookAt(
-                    playerGroup.position.x, 
-                    playerGroup.position.y + 1.4, 
-                    playerGroup.position.z
-                );
+                camera.lookAt(playerGroup.position.x, playerGroup.position.y + 1.2, playerGroup.position.z);
 
                 renderer.render(scene, camera);
             }
@@ -1027,7 +1258,7 @@
                 camera.updateProjectionMatrix();
                 renderer.setSize(window.innerWidth, window.innerHeight);
             });
-        });
+        }
     </script>
 </body>
 </html>
