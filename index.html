@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3D RPG World - Combined Phases</title>
+    <title>3D RPG World - Fixed World Alignment</title>
     <style>
         * {
             box-sizing: border-box;
@@ -31,7 +31,6 @@
             z-index: 1;
         }
 
-        /* --- HUD OVERLAYS --- */
         #hud-bottom-left {
             position: absolute;
             bottom: 15px;
@@ -41,20 +40,6 @@
             gap: 8px;
             align-items: flex-end;
             pointer-events: none;
-        }
-
-        #minimap-box {
-            width: 80px;
-            height: 80px;
-            background: rgba(10, 15, 25, 0.85);
-            border: 2px solid #00ffcc;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #00ffcc;
-            font-size: 10px;
-            font-weight: bold;
         }
 
         #status-bars {
@@ -87,7 +72,6 @@
         .bar-fill.exp { background: #00ffaa; width: 45%; }
         .bar-fill.hp { background: #ff3344; width: 100%; }
         .bar-fill.energy { background: #ffcc00; width: 100%; }
-        .bar-fill.hunger { background: #a66a38; width: 65%; }
 
         .bar-label {
             position: absolute;
@@ -120,12 +104,8 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            touch-action: manipulation;
         }
 
-        .menu-btn:active { background: #00ffcc; color: #000; }
-
-        /* Bottom Center Hotbar */
         #hotbar {
             position: absolute;
             bottom: 15px;
@@ -155,7 +135,6 @@
             position: relative;
         }
 
-        .hotbar-slot .icon { font-size: 14px; }
         .hotbar-slot .count {
             position: absolute;
             bottom: 2px;
@@ -164,7 +143,6 @@
             color: #00ffcc;
         }
 
-        /* --- RIGHT CONTROL PANEL --- */
         .controls-right {
             position: absolute;
             bottom: 15px;
@@ -179,14 +157,12 @@
         .camera-utility-row {
             display: flex;
             gap: 6px;
-            margin-bottom: 2px;
         }
 
         .radial-action-arc {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 6px;
-            align-items: flex-end;
         }
 
         .btn {
@@ -214,21 +190,6 @@
             display: flex;
             flex-direction: column;
             line-height: 1.1;
-            transition: opacity 0.2s, background 0.1s;
-        }
-
-        .action-btn:active { background: #00ffcc; }
-        .action-btn.disabled {
-            opacity: 0.4;
-            background: #555 !important;
-            border-color: #888 !important;
-            color: #aaa !important;
-        }
-
-        .action-btn .cost {
-            font-size: 7px;
-            color: #222;
-            font-weight: normal;
         }
 
         .cam-btn {
@@ -246,7 +207,6 @@
             background: rgba(0, 255, 204, 0.85);
         }
 
-        /* Joystick Base & Knob */
         #joystick-base {
             width: 100px;
             height: 100px;
@@ -269,189 +229,6 @@
             left: 50%;
             transform: translate(-50%, -50%);
             pointer-events: none;
-        }
-
-        /* --- FULL MENU INTERFACE --- */
-        #menu-modal {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 92vw;
-            height: 85vh;
-            max-width: 750px;
-            max-height: 500px;
-            background: rgba(18, 22, 32, 0.96);
-            border: 2px solid #00ffcc;
-            border-radius: 12px;
-            z-index: 100;
-            display: none;
-            flex-direction: column;
-            overflow: hidden;
-            box-shadow: 0 0 20px rgba(0, 255, 204, 0.3);
-        }
-
-        .menu-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(10, 14, 22, 0.9);
-            padding: 8px 16px;
-            border-bottom: 2px solid #334455;
-        }
-
-        .menu-header h2 {
-            margin: 0;
-            color: #00ffcc;
-            font-size: 15px;
-            letter-spacing: 1px;
-        }
-
-        .close-btn {
-            background: #ff4444;
-            color: #fff;
-            border: none;
-            padding: 4px 12px;
-            border-radius: 4px;
-            font-weight: bold;
-            font-size: 12px;
-            cursor: pointer;
-        }
-
-        .menu-body {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-        }
-
-        .equipment-panel {
-            width: 48%;
-            background: rgba(255, 255, 255, 0.03);
-            border-right: 2px solid #334455;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            position: relative;
-        }
-
-        .paperdoll-container {
-            display: grid;
-            grid-template-columns: 50px 1fr 50px;
-            gap: 8px;
-            width: 100%;
-            height: 100%;
-            align-items: center;
-        }
-
-        .equip-column {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            justify-content: center;
-        }
-
-        .equip-slot {
-            width: 44px;
-            height: 44px;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid #667788;
-            border-radius: 6px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-        }
-
-        .equip-slot .slot-label {
-            font-size: 7px;
-            color: #8899aa;
-            position: absolute;
-            top: 2px;
-            left: 3px;
-        }
-
-        .equip-slot .item-icon { font-size: 18px; }
-
-        .character-avatar-box {
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid #445566;
-            border-radius: 8px;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            color: #00ffcc;
-            font-size: 11px;
-            text-align: center;
-        }
-
-        .avatar-placeholder { font-size: 50px; margin-bottom: 5px; }
-
-        .inventory-panel {
-            width: 52%;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .tab-bar {
-            display: flex;
-            background: rgba(10, 14, 22, 0.8);
-            border-bottom: 1px solid #334455;
-        }
-
-        .tab-btn {
-            flex: 1;
-            padding: 8px 4px;
-            background: transparent;
-            border: none;
-            color: #8899aa;
-            font-size: 13px;
-            text-align: center;
-            border-bottom: 2px solid transparent;
-        }
-
-        .tab-btn.active {
-            color: #00ffcc;
-            border-bottom: 2px solid #00ffcc;
-            background: rgba(0, 255, 204, 0.1);
-        }
-
-        .tab-content {
-            flex: 1;
-            padding: 10px;
-            overflow-y: auto;
-        }
-
-        .inv-grid-large {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 6px;
-        }
-
-        .inv-item-slot {
-            aspect-ratio: 1;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid #556677;
-            border-radius: 6px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            font-size: 10px;
-            position: relative;
-        }
-
-        .inv-item-slot .qty {
-            position: absolute;
-            bottom: 2px;
-            right: 4px;
-            font-size: 9px;
-            color: #00ffcc;
-            font-weight: bold;
         }
 
         #mobile-log {
@@ -479,24 +256,17 @@
     <div id="canvas-container"></div>
 
     <div id="hud-bottom-left">
-        <div id="minimap-box">MAP</div>
         <div id="status-bars">
             <div class="bar-container"><div class="bar-fill exp"></div><span class="bar-label">EXP Lv.5</span></div>
             <div class="bar-container"><div class="bar-fill hp" id="bar-hp"></div><span class="bar-label">HEALTH</span></div>
             <div class="bar-container"><div class="bar-fill energy" id="bar-energy"></div><span class="bar-label">ENERGY</span></div>
-            <div class="bar-container"><div class="bar-fill hunger"></div><span class="bar-label">HUNGER</span></div>
         </div>
-    </div>
-
-    <div class="top-right-menu">
-        <button id="btn-menu-open" class="menu-btn">🎒</button>
     </div>
 
     <div id="hotbar">
         <div class="hotbar-slot"><span class="icon">🪵</span><span class="count" id="count-wood">0</span></div>
         <div class="hotbar-slot"><span class="icon">🪨</span><span class="count" id="count-stone">0</span></div>
         <div class="hotbar-slot"><span class="icon">🫐</span><span class="count" id="count-berry">0</span></div>
-        <div class="hotbar-slot"><span class="icon">🍄</span><span class="count" id="count-shroom">0</span></div>
     </div>
 
     <div class="controls-right">
@@ -507,63 +277,14 @@
         </div>
 
         <div class="radial-action-arc">
-            <button id="btn-attack" class="btn action-btn">ATTACK ⚔️<span class="cost">Tap/Hold</span></button>
-            <button id="btn-interact" class="btn action-btn">INTERACT 🤝<span class="cost">Action</span></button>
-            <button id="btn-jump" class="btn action-btn">JUMP 🦘<span class="cost">5 Stamina</span></button>
-            <button id="btn-bow" class="btn action-btn">BOW 🏹<span class="cost">12 Energy</span></button>
+            <button id="btn-attack" class="btn action-btn">ATTACK ⚔️</button>
+            <button id="btn-interact" class="btn action-btn">INTERACT 🤝</button>
+            <button id="btn-jump" class="btn action-btn">JUMP 🦘</button>
+            <button id="btn-bow" class="btn action-btn">BOW 🏹</button>
         </div>
 
         <div id="joystick-base">
             <div id="joystick-knob"></div>
-        </div>
-    </div>
-
-    <div id="menu-modal">
-        <div class="menu-header">
-            <h2>EQUIPMENT & INVENTORY</h2>
-            <button id="btn-menu-close" class="close-btn">✕ CLOSE</button>
-        </div>
-        <div class="menu-body">
-            <div class="equipment-panel">
-                <div class="paperdoll-container">
-                    <div class="equip-column">
-                        <div class="equip-slot"><span class="slot-label">MAIN</span><span class="item-icon">🪓</span></div>
-                        <div class="equip-slot"><span class="slot-label">HEAD</span></div>
-                        <div class="equip-slot"><span class="slot-label">FACE</span></div>
-                        <div class="equip-slot"><span class="slot-label">BACK</span></div>
-                        <div class="equip-slot"><span class="slot-label">EXTRA</span></div>
-                    </div>
-                    <div class="character-avatar-box">
-                        <div class="avatar-placeholder">🧍</div>
-                        <b>Adventurer</b>
-                        <span style="font-size:9px; color:#888; margin-top:4px;">Lv. 5 Explorer</span>
-                    </div>
-                    <div class="equip-column">
-                        <div class="equip-slot"><span class="slot-label">OFFHAND</span><span class="item-icon">🏹</span></div>
-                        <div class="equip-slot"><span class="slot-label">TORSO</span><span class="item-icon">🛡️</span></div>
-                        <div class="equip-slot"><span class="slot-label">WRIST</span></div>
-                        <div class="equip-slot"><span class="slot-label">LEGS</span></div>
-                        <div class="equip-slot"><span class="slot-label">FEET</span></div>
-                    </div>
-                </div>
-            </div>
-            <div class="inventory-panel">
-                <div class="tab-bar">
-                    <button class="tab-btn active" onclick="switchTab('inv')">🎒</button>
-                    <button class="tab-btn" onclick="switchTab('skills')">⚡</button>
-                    <button class="tab-btn" onclick="switchTab('quests')">📜</button>
-                </div>
-                <div class="tab-content" id="tab-inv">
-                    <div class="inv-grid-large" id="inventory-grid"></div>
-                </div>
-                <div class="tab-content" id="tab-skills" style="display:none; color:#aaa; font-size:11px;">
-                    <p><b>• Taming Master:</b> Can tame submissive creatures below 10% HP.</p>
-                    <p>• <b>Lumberjack:</b> +10% Yield from trees.</p>
-                </div>
-                <div class="tab-content" id="tab-quests" style="display:none; color:#aaa; font-size:11px;">
-                    <p><b>Active Quest:</b> Explore the island shipwreck and tame a companion creature.</p>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -581,25 +302,15 @@
             return false;
         };
 
-        window.switchTab = function(tabName) {
-            ['inv', 'skills', 'quests'].forEach((t, i) => {
-                const c = document.getElementById(`tab-${t}`);
-                if (c) c.style.display = (t === tabName) ? 'block' : 'none';
-                const btn = document.querySelectorAll('.tab-btn')[i];
-                if (btn) btn.classList.toggle('active', t === tabName);
-            });
-        };
-
         window.addEventListener('DOMContentLoaded', () => {
             try {
                 const container = document.getElementById('canvas-container');
                 if (!container) return;
 
-                // Game State & Inventory
                 const maxEnergy = 100;
                 let currentEnergy = 100;
                 let currentHP = 100;
-                const inventory = { wood: 0, stone: 0, berry: 0, shroom: 0, ore: 0 };
+                const inventory = { wood: 0, stone: 0, berry: 0 };
 
                 function updateDisplays() {
                     const barE = document.getElementById('bar-energy');
@@ -608,23 +319,13 @@
                     if (barH) barH.style.width = Math.max(0, currentHP) + '%';
                 }
 
-                function consumeEnergy(amt) {
-                    if (currentEnergy >= amt) {
-                        currentEnergy -= amt;
-                        updateDisplays();
-                        return true;
-                    }
-                    return false;
-                }
-
                 function updateInventoryUI() {
-                    ['wood', 'stone', 'berry', 'shroom'].forEach(k => {
+                    ['wood', 'stone', 'berry'].forEach(k => {
                         const el = document.getElementById('count-' + k);
                         if (el) el.innerText = inventory[k] || 0;
                     });
                 }
 
-                // 3D Scene Initialization
                 const scene = new THREE.Scene();
                 scene.background = new THREE.Color(0x111622);
 
@@ -634,53 +335,43 @@
                 renderer.setSize(window.innerWidth, window.innerHeight);
                 container.appendChild(renderer.domElement);
 
-                // Lighting (Sun/Day-Night Cycle)
-                const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-                scene.add(ambientLight);
-
-                const sunLight = new THREE.DirectionalLight(0xfffaed, 1.0);
+                scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+                const sunLight = new THREE.DirectionalLight(0xfffaed, 0.9);
                 sunLight.position.set(30, 50, 20);
                 scene.add(sunLight);
 
-                // World Geometry (Elevation & Biomes)
                 const WORLD_SIZE = 140;
-                const HALF_WORLD = WORLD_SIZE / 2;
 
-                const groundGeo = new THREE.PlaneGeometry(WORLD_SIZE, WORLD_SIZE, 32, 32);
+                // Terrain Elevation Math Function
+                function getTerrainHeight(x, z) {
+                    if (x < -35) return -2.0; // Water basin
+                    return Math.sin(x * 0.08) * Math.cos(z * 0.08) * 3.0;
+                }
+
+                const groundGeo = new THREE.PlaneGeometry(WORLD_SIZE, WORLD_SIZE, 40, 40);
                 groundGeo.rotateX(-Math.PI / 2);
                 const pos = groundGeo.attributes.position;
                 for (let i = 0; i < pos.count; i++) {
-                    const x = pos.getX(i);
-                    const z = pos.getZ(i);
-                    // Elevation curves / cliffs
-                    let y = Math.sin(x * 0.05) * Math.cos(z * 0.05) * 2.5;
-                    if (x < -40) y -= 2.5; // Water beach slope
-                    pos.setY(i, y);
+                    const vx = pos.getX(i);
+                    const vz = pos.getZ(i);
+                    pos.setY(i, getTerrainHeight(vx, vz));
                 }
                 groundGeo.computeVertexNormals();
 
-                const groundMat = new THREE.MeshStandardMaterial({ color: 0x224422, flatShading: true });
+                const groundMat = new THREE.MeshStandardMaterial({ color: 0x2d4a2d, flatShading: true });
                 const groundMesh = new THREE.Mesh(groundGeo, groundMat);
                 scene.add(groundMesh);
 
-                // Water Lake Area
+                // Water Surface
                 const waterMesh = new THREE.Mesh(
                     new THREE.PlaneGeometry(50, WORLD_SIZE),
                     new THREE.MeshStandardMaterial({ color: 0x0066aa, transparent: true, opacity: 0.7 })
                 );
                 waterMesh.rotation.x = -Math.PI / 2;
-                waterMesh.position.set(-50, -1.2, 0);
+                waterMesh.position.set(-55, -1.0, 0);
                 scene.add(waterMesh);
 
-                // Shipwreck Spawn Intro
-                const shipGroup = new THREE.Group();
-                const shipHull = new THREE.Mesh(new THREE.BoxGeometry(6, 3, 12), new THREE.MeshStandardMaterial({ color: 0x3d2314 }));
-                shipHull.rotation.z = 0.3;
-                shipGroup.add(shipHull);
-                shipGroup.position.set(-45, -0.5, -30);
-                scene.add(shipGroup);
-
-                // Player Character
+                // Player Setup
                 const playerGroup = new THREE.Group();
                 const playerMesh = new THREE.Mesh(
                     new THREE.BoxGeometry(1.2, 1.6, 1.2),
@@ -689,26 +380,15 @@
                 playerMesh.position.y = 0.8;
                 playerGroup.add(playerMesh);
 
-                const playerPointer = new THREE.Mesh(
-                    new THREE.BoxGeometry(0.3, 0.3, 0.4),
-                    new THREE.MeshStandardMaterial({ color: 0xff3333 })
-                );
-                playerPointer.position.set(0, 1.2, -0.7);
-                playerGroup.add(playerPointer);
-
-                playerGroup.position.set(-35, 0, -25); // Spawn near shipwreck
+                playerGroup.position.set(-20, getTerrainHeight(-20, 0), 0);
                 scene.add(playerGroup);
 
                 let playerVY = 0;
                 let isGrounded = true;
 
-                // Resources & Creatures Arrays
                 const harvestables = [];
                 const creatures = [];
-                const tamedCompanions = [];
-                const projectiles = [];
 
-                // Resource Generators
                 function addResource(type, x, z) {
                     const g = new THREE.Group();
                     let dropType = 'wood';
@@ -718,13 +398,6 @@
                         const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.4, 1.5), new THREE.MeshStandardMaterial({ color: 0x4a2e12 }));
                         trunk.position.y = 0.75;
                         const top = new THREE.Mesh(new THREE.DodecahedronGeometry(1.4), new THREE.MeshStandardMaterial({ color: 0x1e6b27 }));
-                        top.position.y = 2.2;
-                        g.add(trunk, top);
-                        dropType = 'wood';
-                    } else if (type === 'palm') {
-                        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.25, 2.2), new THREE.MeshStandardMaterial({ color: 0x8b6508 }));
-                        trunk.position.y = 1.1;
-                        const top = new THREE.Mesh(new THREE.ConeGeometry(1.6, 0.8, 5), new THREE.MeshStandardMaterial({ color: 0x22aa44 }));
                         top.position.y = 2.2;
                         g.add(trunk, top);
                         dropType = 'wood';
@@ -742,149 +415,20 @@
                         hp = 2;
                     }
 
-                    g.position.set(x, 0, z);
+                    const groundY = getTerrainHeight(x, z);
+                    g.position.set(x, groundY, z);
                     scene.add(g);
-                    harvestables.push({ mesh: g, type, dropType, hp, x, z, radius: 0.9 });
+                    harvestables.push({ mesh: g, dropType, hp, x, z });
                 }
 
-                // Populate Map
-                for (let i = 0; i < 40; i++) {
-                    const rx = (Math.random() - 0.4) * (WORLD_SIZE - 20);
-                    const rz = (Math.random() - 0.5) * (WORLD_SIZE - 20);
-                    const types = ['oak', 'palm', 'ore', 'bush'];
+                for (let i = 0; i < 35; i++) {
+                    const rx = (Math.random() - 0.3) * (WORLD_SIZE - 30);
+                    const rz = (Math.random() - 0.5) * (WORLD_SIZE - 30);
+                    const types = ['oak', 'ore', 'bush'];
                     addResource(types[Math.floor(Math.random() * types.length)], rx, rz);
                 }
 
-                // Creature Generator (Phase 3)
-                function spawnCreature(x, z, disposition) {
-                    let color = 0x33cc33; // Docile
-                    if (disposition === 'wary') color = 0xeecc00;
-                    if (disposition === 'hostile') color = 0xee3333;
-
-                    const body = new THREE.Mesh(
-                        new THREE.SphereGeometry(0.7, 8, 8),
-                        new THREE.MeshStandardMaterial({ color })
-                    );
-                    body.position.set(x, 0.7, z);
-                    scene.add(body);
-
-                    creatures.push({
-                        mesh: body,
-                        disposition: disposition,
-                        hp: 30,
-                        maxHP: 30,
-                        x: x,
-                        z: z,
-                        isSubmissive: false,
-                        isTamed: false
-                    });
-                }
-
-                // Spawn 15 creatures
-                for (let i = 0; i < 15; i++) {
-                    const cx = (Math.random() - 0.5) * 80;
-                    const cz = (Math.random() - 0.5) * 80;
-                    const disp = i % 3 === 0 ? 'hostile' : (i % 2 === 0 ? 'wary' : 'docile');
-                    spawnCreature(cx, cz, disp);
-                }
-
-                // Actions: Tap/Hold Attack, Interact, Bow Shot, Jump
-                let attackTimer = 0;
-                const btnAttack = document.getElementById('btn-attack');
-
-                if (btnAttack) {
-                    btnAttack.addEventListener('pointerdown', (e) => {
-                        e.preventDefault();
-                        attackTimer = Date.now();
-                    });
-
-                    btnAttack.addEventListener('pointerup', (e) => {
-                        e.preventDefault();
-                        const duration = Date.now() - attackTimer;
-                        if (duration > 300) {
-                            // Power Attack
-                            if (consumeEnergy(25)) performAttack(2.5, 20);
-                        } else {
-                            // Basic Attack
-                            if (consumeEnergy(10)) performAttack(1.6, 10);
-                        }
-                    });
-                }
-
-                function performAttack(rangeBonus, damage) {
-                    // Attack resources & creatures
-                    creatures.forEach(c => {
-                        const dist = Math.hypot(playerGroup.position.x - c.x, playerGroup.position.z - c.z);
-                        if (dist < rangeBonus + 0.8) {
-                            c.hp -= damage;
-                            c.mesh.position.y = 0.4; // Knockback effect
-                            if (c.hp <= 3 && !c.isTamed) {
-                                c.isSubmissive = true;
-                                c.mesh.material.color.setHex(0x00ffff); // Submissive cyan highlight
-                            }
-                        }
-                    });
-
-                    for (let i = harvestables.length - 1; i >= 0; i--) {
-                        const h = harvestables[i];
-                        if (Math.hypot(playerGroup.position.x - h.x, playerGroup.position.z - h.z) < rangeBonus) {
-                            h.hp -= 1;
-                            if (h.hp <= 0) {
-                                inventory[h.dropType] = (inventory[h.dropType] || 0) + 2;
-                                updateInventoryUI();
-                                scene.remove(h.mesh);
-                                harvestables.splice(i, 1);
-                            }
-                        }
-                    }
-                }
-
-                // Interact Action (Pluck / Tame)
-                const btnInteract = document.getElementById('btn-interact');
-                if (btnInteract) {
-                    btnInteract.onclick = () => {
-                        creatures.forEach(c => {
-                            const dist = Math.hypot(playerGroup.position.x - c.x, playerGroup.position.z - c.z);
-                            if (dist < 2.5 && c.isSubmissive && !c.isTamed && tamedCompanions.length < 2) {
-                                c.isTamed = true;
-                                c.isSubmissive = false;
-                                c.mesh.material.color.setHex(0xaa00ff); // Purple tame color
-                                tamedCompanions.push(c);
-                            }
-                        });
-                    };
-                }
-
-                // Jump / Climb Button
-                const btnJump = document.getElementById('btn-jump');
-                if (btnJump) {
-                    btnJump.onclick = () => {
-                        if (isGrounded) {
-                            playerVY = 0.25;
-                            isGrounded = false;
-                        }
-                    };
-                }
-
-                // Ranged Bow Attack
-                const btnBow = document.getElementById('btn-bow');
-                if (btnBow) {
-                    btnBow.onclick = () => {
-                        if (consumeEnergy(12)) {
-                            const arrow = new THREE.Mesh(
-                                new THREE.BoxGeometry(0.1, 0.1, 0.8),
-                                new THREE.MeshBasicMaterial({ color: 0xffff00 })
-                            );
-                            arrow.position.copy(playerGroup.position);
-                            arrow.position.y += 1.0;
-                            arrow.rotation.y = playerGroup.rotation.y;
-                            scene.add(arrow);
-                            projectiles.push({ mesh: arrow, dirX: Math.sin(playerGroup.rotation.y), dirZ: Math.cos(playerGroup.rotation.y), life: 40 });
-                        }
-                    };
-                }
-
-                // Virtual Joystick
+                // Joystick & Movement
                 let joystickVector = { x: 0, y: 0 };
                 const baseEl = document.getElementById('joystick-base');
                 const knobEl = document.getElementById('joystick-knob');
@@ -914,7 +458,7 @@
                 baseEl.addEventListener('pointermove', (e) => { if (baseEl.hasPointerCapture(e.pointerId)) handleJoystick(e); });
                 baseEl.addEventListener('pointerup', (e) => { baseEl.releasePointerCapture(e.pointerId); resetJoystick(); });
 
-                // Camera Toggle
+                // Camera Logic
                 let isAutoCam = false;
                 let cameraAngle = 0;
                 let camRotInput = 0;
@@ -923,6 +467,7 @@
                     camModeBtn.onclick = () => {
                         isAutoCam = !isAutoCam;
                         camModeBtn.innerText = isAutoCam ? '🎥 AUTO' : '🔒 FREE';
+                        camModeBtn.style.background = isAutoCam ? '#ffaa00' : 'rgba(0, 255, 204, 0.85)';
                     };
                 }
 
@@ -935,84 +480,57 @@
                 bindCam('btn-cam-left', -1);
                 bindCam('btn-cam-right', 1);
 
-                // Menu UI Open / Close
-                const menuModal = document.getElementById('menu-modal');
-                document.getElementById('btn-menu-open').onclick = () => { updateInventoryUI(); menuModal.style.display = 'flex'; };
-                document.getElementById('btn-menu-close').onclick = () => { menuModal.style.display = 'none'; };
-
                 // Game Loop
                 const clock = new THREE.Clock();
-                let dayTime = 0;
 
                 function animate() {
                     requestAnimationFrame(animate);
-
                     const delta = clock.getDelta();
-                    dayTime += delta * 0.05; // Day-night cycle progression
 
-                    // Rotate Sun Light
-                    sunLight.position.x = Math.cos(dayTime) * 60;
-                    sunLight.position.y = Math.sin(dayTime) * 60;
-
-                    // Energy Regeneration
-                    if (currentEnergy < maxEnergy) {
-                        currentEnergy = Math.min(maxEnergy, currentEnergy + 10 * delta);
-                        updateDisplays();
-                    }
-
-                    // Player Jump Physics
-                    playerGroup.position.y += playerVY;
-                    if (!isGrounded) {
-                        playerVY -= 0.8 * delta; // Gravity
-                        if (playerGroup.position.y <= 0) {
-                            playerGroup.position.y = 0;
-                            playerVY = 0;
-                            isGrounded = true;
-                        }
-                    }
-
-                    // Joystick Movement
                     if (camRotInput !== 0) cameraAngle += camRotInput * 2.0 * delta;
 
                     const jx = joystickVector.x;
                     const jy = joystickVector.y;
 
                     if (Math.abs(jx) > 0.05 || Math.abs(jy) > 0.05) {
-                        const moveSpeed = playerGroup.position.x < -40 ? 4 : 8; // Swimming slow down
+                        const moveSpeed = 8;
                         const dx = (jx * Math.cos(cameraAngle) + jy * Math.sin(cameraAngle)) * moveSpeed * delta;
                         const dz = (-jx * Math.sin(cameraAngle) + jy * Math.cos(cameraAngle)) * moveSpeed * delta;
 
                         playerGroup.position.x += dx;
                         playerGroup.position.z += dz;
-                        playerGroup.rotation.y = Math.atan2(dx, dz);
-                    }
 
-                    // Companions AI Follow
-                    tamedCompanions.forEach((comp, idx) => {
-                        const targetX = playerGroup.position.x + Math.sin(idx * 2) * 2;
-                        const targetZ = playerGroup.position.z + Math.cos(idx * 2) * 2;
-                        comp.x += (targetX - comp.x) * 0.05;
-                        comp.z += (targetZ - comp.z) * 0.05;
-                        comp.mesh.position.set(comp.x, 0.7, comp.z);
-                    });
+                        const targetAngle = Math.atan2(dx, dz);
+                        playerGroup.rotation.y = targetAngle;
 
-                    // Projectiles Flight
-                    for (let i = projectiles.length - 1; i >= 0; i--) {
-                        const p = projectiles[i];
-                        p.mesh.position.x += p.dirX * 20 * delta;
-                        p.mesh.position.z += p.dirZ * 20 * delta;
-                        p.life--;
-                        if (p.life <= 0) {
-                            scene.remove(p.mesh);
-                            projectiles.splice(i, 1);
+                        // Auto Camera Follow Logic
+                        if (isAutoCam && camRotInput === 0) {
+                            let desiredAngle = targetAngle + Math.PI;
+                            let diff = desiredAngle - cameraAngle;
+                            diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+                            cameraAngle += diff * delta * 2.0;
                         }
                     }
 
-                    // Camera Orbit Update
+                    // Stick Player to Terrain Height
+                    const currentGroundY = getTerrainHeight(playerGroup.position.x, playerGroup.position.z);
+                    if (isGrounded) {
+                        playerGroup.position.y = currentGroundY;
+                    } else {
+                        playerGroup.position.y += playerVY;
+                        playerVY -= 0.8 * delta;
+                        if (playerGroup.position.y <= currentGroundY) {
+                            playerGroup.position.y = currentGroundY;
+                            playerVY = 0;
+                            isGrounded = true;
+                        }
+                    }
+
+                    // Camera Position Update
                     camera.position.x = playerGroup.position.x + Math.sin(cameraAngle) * 14;
                     camera.position.z = playerGroup.position.z + Math.cos(cameraAngle) * 14;
                     camera.position.y = playerGroup.position.y + 10;
-                    camera.lookAt(playerGroup.position.x, playerGroup.position.y + 0.6, playerGroup.position.z);
+                    camera.lookAt(playerGroup.position.x, playerGroup.position.y + 0.8, playerGroup.position.z);
 
                     renderer.render(scene, camera);
                 }
