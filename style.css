@@ -1,0 +1,439 @@
+* {
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #111;
+    font-family: monospace, sans-serif;
+}
+
+#canvas-container {
+    width: 100vw;
+    height: 100vh;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+}
+
+/* --- HUD OVERLAYS --- */
+#hud-bottom-left {
+    position: absolute;
+    bottom: 15px;
+    left: 15px;
+    z-index: 10;
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+    pointer-events: none;
+}
+
+#minimap-box {
+    width: 80px;
+    height: 80px;
+    background: rgba(10, 15, 25, 0.85);
+    border: 2px solid #00ffcc;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #00ffcc;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+#status-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 130px;
+    background: rgba(0,0,0,0.75);
+    padding: 6px;
+    border-radius: 6px;
+    border: 1px solid #444;
+}
+
+.bar-container {
+    width: 100%;
+    height: 12px;
+    background: #222;
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid #555;
+}
+
+.bar-fill {
+    height: 100%;
+    width: 100%;
+    transition: width 0.15s ease-out;
+}
+
+.bar-fill.exp { background: #00ffaa; width: 45%; }
+.bar-fill.hp { background: #ff3344; width: 100%; }
+.bar-fill.energy { background: #ffcc00; width: 100%; }
+.bar-fill.hunger { background: #a66a38; width: 65%; }
+
+.bar-label {
+    position: absolute;
+    top: 0;
+    left: 4px;
+    font-size: 8px;
+    color: #fff;
+    line-height: 12px;
+    font-weight: bold;
+    text-shadow: 1px 1px 1px #000;
+}
+
+.top-right-menu {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 10;
+    display: flex;
+    gap: 8px;
+}
+
+.menu-btn {
+    width: 44px;
+    height: 44px;
+    background: rgba(30, 30, 40, 0.85);
+    border: 2px solid #fff;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 18px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+.menu-btn:active { background: #00ffcc; color: #000; }
+
+/* Bottom Center Hotbar */
+#hotbar {
+    position: absolute;
+    bottom: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 6px;
+    z-index: 10;
+    background: rgba(0,0,0,0.6);
+    padding: 6px;
+    border-radius: 10px;
+    border: 1px solid #555;
+    pointer-events: auto;
+}
+
+.hotbar-slot {
+    width: 44px;
+    height: 44px;
+    background: rgba(255,255,255,0.15);
+    border: 2px solid #aaa;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 10px;
+    position: relative;
+}
+
+.hotbar-slot .icon { font-size: 14px; }
+.hotbar-slot .count {
+    position: absolute;
+    bottom: 2px;
+    right: 4px;
+    font-weight: bold;
+    color: #00ffcc;
+}
+
+/* --- RIGHT RADIAL CONTROLS --- */
+.controls-right {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 220px;
+    height: 220px;
+    z-index: 10;
+    pointer-events: auto;
+}
+
+.camera-utility-row {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: flex;
+    gap: 4px;
+}
+
+.btn {
+    background: rgba(255, 255, 255, 0.85);
+    border: 2px solid #fff;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 10px;
+    color: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    outline: none;
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+.action-btn {
+    position: absolute;
+    width: 64px;
+    height: 40px;
+    border-radius: 20px;
+    background: #ffaa00;
+    color: #000;
+    font-size: 9px;
+    border: 2px solid #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.1;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+}
+
+/* Arc Positioning */
+#btn-action-1 { top: 15px; left: 10px; }   
+#btn-action-2 { top: 65px; left: -15px; }  
+#btn-action-3 { top: 120px; left: 5px; }   
+
+.action-btn:active { background: #00ffcc; }
+.action-btn.disabled {
+    opacity: 0.4;
+    background: #555 !important;
+    border-color: #888 !important;
+    color: #aaa !important;
+}
+
+.action-btn .cost {
+    font-size: 7px;
+    color: #222;
+    font-weight: normal;
+}
+
+.cam-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 12px;
+}
+
+.mode-btn {
+    height: 32px;
+    padding: 0 6px;
+    border-radius: 16px;
+    font-size: 9px;
+    background: rgba(0, 255, 204, 0.85);
+}
+
+/* Joystick Base & Knob */
+#joystick-base {
+    width: 110px;
+    height: 110px;
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    touch-action: none;
+}
+
+#joystick-knob {
+    width: 44px;
+    height: 44px;
+    background: rgba(0, 255, 204, 0.85);
+    border: 2px solid #fff;
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+
+/* --- FULL MENU INTERFACE --- */
+#menu-modal {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 92vw;
+    height: 85vh;
+    max-width: 750px;
+    max-height: 500px;
+    background: rgba(18, 22, 32, 0.96);
+    border: 2px solid #00ffcc;
+    border-radius: 12px;
+    z-index: 100;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(0, 255, 204, 0.3);
+    pointer-events: auto;
+}
+
+.menu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(10, 14, 22, 0.9);
+    padding: 8px 16px;
+    border-bottom: 2px solid #334455;
+}
+
+.menu-header h2 {
+    margin: 0;
+    color: #00ffcc;
+    font-size: 15px;
+    letter-spacing: 1px;
+}
+
+.close-btn {
+    background: #ff4444;
+    color: #fff;
+    border: none;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.menu-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.equipment-panel {
+    width: 48%;
+    background: rgba(255, 255, 255, 0.03);
+    border-right: 2px solid #334455;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+.paperdoll-container {
+    display: grid;
+    grid-template-columns: 50px 1fr 50px;
+    gap: 8px;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+}
+
+.equip-column {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    justify-content: center;
+}
+
+.equip-slot {
+    width: 48px;
+    height: 48px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid #667788;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.equip-slot .slot-label {
+    font-size: 7px;
+    color: #8899aa;
+    position: absolute;
+    top: 2px;
+    left: 3px;
+}
+
+.equip-slot .item-icon { font-size: 18px; }
+
+.character-avatar-box {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid #445566;
+    border-radius: 8px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #00ffcc;
+    font-size: 11px;
+    text-align: center;
+}
+
+.avatar-placeholder { font-size: 50px; margin-bottom: 5px; }
+
+.inventory-panel {
+    width: 52%;
+    display: flex;
+    flex-direction: column;
+}
+
+.tab-bar {
+    display: flex;
+    background: rgba(10, 14, 22, 0.8);
+    border-bottom: 1px solid #334455;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 8px 4px;
+    background: transparent;
+    border: none;
+    color: #8899aa;
+    font-size: 13px;
+    text-align: center;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+}
+
+.tab-btn.active {
+    color: #00ffcc;
+    border-bottom: 2px solid #00ffcc;
+    background: rgba(0, 255, 204, 0.1);
+}
+
+.tab-content {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+}
+
+.inv-grid-large {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+}
+
+.inv-item-slot {
+    aspect-ratio: 1;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid #556677;
+    border
