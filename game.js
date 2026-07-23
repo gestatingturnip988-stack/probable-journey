@@ -1,3 +1,4 @@
+// Global error logging overlay for mobile debugging
 function showMobileError(msg) {
     const logEl = document.getElementById('mobile-log');
     if (logEl) {
@@ -11,11 +12,25 @@ window.onerror = function(msg, url, lineNo) {
     return false;
 };
 
+// Global Tab Switcher (accessible by HTML onclick)
+window.switchTab = function(tabName) {
+    const tabs = ['inv', 'skills', 'quests', 'options', 'journal'];
+    tabs.forEach((t, index) => {
+        const content = document.getElementById(`tab-${t}`);
+        if (content) content.style.display = (t === tabName) ? 'block' : 'none';
+        const btn = document.querySelectorAll('.tab-btn')[index];
+        if (btn) {
+            if (t === tabName) btn.classList.add('active');
+            else btn.classList.remove('active');
+        }
+    });
+};
+
 try {
-    // --- Energy & Inventory Data ---
+    // --- Energy & Inventory Systems ---
     const maxEnergy = 100;
     let currentEnergy = 100;
-    const energyRegenRate = 12; // Energy regenerated per second
+    const energyRegenRate = 12; // Energy per second
 
     const inventory = { wood: 0, stone: 0, berry: 0, shroom: 0 };
 
@@ -83,20 +98,6 @@ try {
         }
     }
 
-    // Modal Tab Navigation
-    window.switchTab = function(tabName) {
-        const tabs = ['inv', 'skills', 'quests', 'options', 'journal'];
-        tabs.forEach((t, index) => {
-            const content = document.getElementById(`tab-${t}`);
-            if (content) content.style.display = (t === tabName) ? 'block' : 'none';
-            const btn = document.querySelectorAll('.tab-btn')[index];
-            if (btn) {
-                if (t === tabName) btn.classList.add('active');
-                else btn.classList.remove('active');
-            }
-        });
-    };
-
     // --- 3D Scene Setup ---
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x1a1a24);
@@ -108,7 +109,9 @@ try {
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
-    document.getElementById('canvas-container').appendChild(renderer.domElement);
+    
+    const container = document.getElementById('canvas-container');
+    if (container) container.appendChild(renderer.domElement);
 
     scene.add(new THREE.AmbientLight(0xffffff, 0.7));
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
@@ -231,11 +234,10 @@ try {
         }, 30);
     }
 
-    // --- Targeted Action Logic ---
+    // --- Targeting Logic ---
     function triggerHit(rangeBonus, damageVal, targetCreaturesOnly = false, targetHarvestablesOnly = false) {
         const totalRange = playerRadius + rangeBonus;
 
-        // 1. Noncreatures (Harvestables)
         if (!targetCreaturesOnly) {
             for (let i = harvestables.length - 1; i >= 0; i--) {
                 const h = harvestables[i];
@@ -253,7 +255,6 @@ try {
             }
         }
 
-        // 2. Enemies (Creatures)
         if (!targetHarvestablesOnly) {
             for (let i = enemies.length - 1; i >= 0; i--) {
                 const e = enemies[i];
@@ -273,19 +274,19 @@ try {
     function performBasicAttack() {
         if (!consumeEnergy(10)) return;
         createSlashFX(1.8, 0x00ffcc);
-        triggerHit(1.8, 1, false, false); // Targets ALL
+        triggerHit(1.8, 1, false, false);
     }
 
     function performPowerAttack() {
         if (!consumeEnergy(25)) return;
         createSlashFX(2.6, 0xff3300);
-        triggerHit(2.6, 2.5, false, false); // Targets ALL
+        triggerHit(2.6, 2.5, false, false);
     }
 
     function performHarvest() {
         if (!consumeEnergy(8)) return;
         createSlashFX(1.5, 0xffaa00);
-        triggerHit(1.5, 1, false, true); // Noncreatures ONLY
+        triggerHit(1.5, 1, false, true);
     }
 
     function bindActionPointer(id, handler) {
@@ -301,7 +302,7 @@ try {
     bindActionPointer('btn-action-2', performPowerAttack);
     bindActionPointer('btn-action-3', performHarvest);
 
-    // --- Virtual Joystick System ---
+    // --- Unified Joystick (Mouse & Touch Supported) ---
     let joystickVector = { x: 0, y: 0 };
     const baseEl = document.getElementById('joystick-base');
     const knobEl = document.getElementById('joystick-knob');
@@ -309,13 +310,15 @@ try {
 
     function handleJoystickMove(e) {
         e.preventDefault();
-        const touch = e.touches ? e.touches[0] : e;
+        const clientX = e.clientX !== undefined ? e.clientX : (e.touches ? e.touches[0].clientX : 0);
+        const clientY = e.clientY !== undefined ? e.clientY : (e.touches ? e.touches[0].clientY : 0);
+
         const rect = baseEl.getBoundingClientRect();
         const centerX = rect.left + rect.width / 2;
         const centerY = rect.top + rect.height / 2;
 
-        let dx = touch.clientX - centerX;
-        let dy = touch.clientY - centerY;
+        let dx = clientX - centerX;
+        let dy = clientY - centerY;
         const dist = Math.hypot(dx, dy);
 
         if (dist > maxRadius) {
@@ -329,7 +332,7 @@ try {
     }
 
     function resetJoystick() {
-        knobEl.style.transform = `translate(-50%, -50%)`;
+        if (knobEl) knobEl.style.transform = `translate(-50%, -50%)`;
         joystickVector = { x: 0, y: 0 };
     }
 
@@ -370,7 +373,7 @@ try {
     bindCamButton('btn-cam-left', -1);
     bindCamButton('btn-cam-right', 1);
 
-    // --- Modal Interface Controls ---
+    // --- Menu Controls ---
     const menuModal = document.getElementById('menu-modal');
     if (document.getElementById('btn-menu-open')) {
         document.getElementById('btn-menu-open').onclick = () => {
@@ -400,7 +403,7 @@ try {
     updateInventoryUI();
     updateEnergyDisplay();
 
-    // --- Main Game Loop ---
+    // --- Game Loop ---
     const clock = new THREE.Clock();
     const moveSpeed = 8;
     const camRotateSpeed = 2.0;
@@ -467,3 +470,4 @@ try {
 } catch (err) {
     showMobileError(err.message);
 }
+ 
