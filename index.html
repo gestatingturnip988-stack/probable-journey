@@ -10,6 +10,7 @@
 <body>
 
     <div id="mobile-log"></div>
+    
     <div id="canvas-container"></div>
 
     <div id="hud-bottom-left">
@@ -35,6 +36,105 @@
 
     <div class="controls-right">
         <div class="camera-utility-row">
+            <button id="btn-cam-left" class="btn cam-btn">↺</button>
+            <button id="btn-cam-mode" class="btn mode-btn">🔒 FREE</button>
+            <button id="btn-cam-right" class="btn cam-btn">↻</button>
+        </div>
+
+        <div class="radial-action-arc">
+            <button id="btn-action-1" class="btn action-btn">ATTACK ⚔️<span class="cost">10 Energy</span></button>
+            <button id="btn-action-2" class="btn action-btn">POWER 💥<span class="cost">25 Energy</span></button>
+            <button id="btn-action-3" class="btn action-btn">HARVEST 🪓<span class="cost">8 Energy</span></button>
+        </div>
+
+        <div id="joystick-base">
+            <div id="joystick-knob"></div>
+        </div>
+    </div>
+
+    <div id="menu-modal">
+        <div class="menu-header">
+            <h2>MY EQUIPMENT & INVENTORY</h2>
+            <button id="btn-menu-close" class="close-btn">✕ CLOSE</button>
+        </div>
+        <div class="menu-body">
+            
+            <div class="equipment-panel">
+                <div class="paperdoll-container">
+                    <div class="equip-column">
+                        <div class="equip-slot"><span class="slot-label">MAIN</span><span class="item-icon">🪓</span></div>
+                        <div class="equip-slot"><span class="slot-label">HEAD</span></div>
+                        <div class="equip-slot"><span class="slot-label">FACE</span></div>
+                        <div class="equip-slot"><span class="slot-label">BACK</span></div>
+                        <div class="equip-slot"><span class="slot-label">EXTRA</span></div>
+                    </div>
+
+                    <div class="character-avatar-box">
+                        <div class="avatar-placeholder">🧍</div>
+                        <b>Generic Character</b>
+                        <span style="font-size:9px; color:#888; margin-top:4px;">Lv. 5 Adventurer</span>
+                    </div>
+
+                    <div class="equip-column">
+                        <div class="equip-slot"><span class="slot-label">OFFHAND</span></div>
+                        <div class="equip-slot"><span class="slot-label">TORSO</span><span class="item-icon">🛡️</span></div>
+                        <div class="equip-slot"><span class="slot-label">WRIST</span></div>
+                        <div class="equip-slot"><span class="slot-label">LEGS</span></div>
+                        <div class="equip-slot"><span class="slot-label">FEET</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="inventory-panel">
+                <div class="tab-bar">
+                    <button class="tab-btn active" onclick="switchTab('inv')">🎒</button>
+                    <button class="tab-btn" onclick="switchTab('skills')">⚡</button>
+                    <button class="tab-btn" onclick="switchTab('quests')">📜</button>
+                    <button class="tab-btn" onclick="switchTab('options')">⚙️</button>
+                    <button class="tab-btn" onclick="switchTab('journal')">📖</button>
+                </div>
+
+                <div class="tab-content" id="tab-inv">
+                    <div class="inv-grid-large" id="inventory-grid"></div>
+                </div>
+
+                <div class="tab-content" id="tab-skills" style="display:none; color:#aaa; font-size:11px;">
+                    <div class="skill-item">
+                        <b>🪵 Lumberjack (Passive - Lv.2)</b>
+                        <div style="font-size:9px; color:#8899aa; margin-top:2px;">Chopping trees grants +10% yield and reduces stamina cost.</div>
+                    </div>
+                    <div class="skill-item">
+                        <b>🪨 Mining Master (Passive - Lv.1)</b>
+                        <div style="font-size:9px; color:#8899aa; margin-top:2px;">Increases stone gathering rate by +15%.</div>
+                    </div>
+                    <div class="skill-item">
+                        <b>🏃 Swift Foot (Passive - Lv.3)</b>
+                        <div style="font-size:9px; color:#8899aa; margin-top:2px;">Base movement speed increased by +8%.</div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab-quests" style="display:none; color:#aaa; font-size:11px;">
+                    <p><b>Active Quests</b></p>
+                    <p>• Gather 5 Wood logs<br>• Harvest 3 Berries</p>
+                </div>
+
+                <div class="tab-content" id="tab-options" style="display:none; color:#aaa; font-size:11px;">
+                    <p><b>Game Options</b></p>
+                    <p>Audio: 100%<br>Graphics: Medium</p>
+                </div>
+
+                <div class="tab-content" id="tab-journal" style="display:none; color:#aaa; font-size:11px;">
+                    <p><b>World Lore</b></p>
+                    <p>Discovered: The Great Whispering Forest.</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="game.js" defer></script>
+</body>
+</html>        <div class="camera-utility-row">
             <button id="btn-cam-left" class="btn cam-btn">↺</button>
             <button id="btn-cam-mode" class="btn mode-btn">🔒 FREE</button>
             <button id="btn-cam-right" class="btn cam-btn">↻</button>
