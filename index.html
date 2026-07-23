@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3D Console RPG World</title>
+    <title>3D Console RPG - Creature System Engine</title>
     <style>
         * {
             box-sizing: border-box;
@@ -131,7 +131,7 @@
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            gap: 6px;
+            gap: 5px;
             z-index: 10;
             background: rgba(0,0,0,0.6);
             padding: 6px;
@@ -140,8 +140,8 @@
         }
 
         .hotbar-slot {
-            width: 42px;
-            height: 42px;
+            width: 38px;
+            height: 38px;
             background: rgba(255,255,255,0.15);
             border: 2px solid #aaa;
             border-radius: 6px;
@@ -150,18 +150,38 @@
             align-items: center;
             justify-content: center;
             color: #fff;
-            font-size: 10px;
+            font-size: 9px;
             position: relative;
         }
 
-        .hotbar-slot .icon { font-size: 14px; }
+        .hotbar-slot .icon { font-size: 13px; }
         .hotbar-slot .count {
             position: absolute;
-            bottom: 2px;
-            right: 4px;
+            bottom: 1px;
+            right: 3px;
             font-weight: bold;
             color: #00ffcc;
         }
+
+        /* Target HUD Indicator */
+        #target-info-overlay {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(10, 15, 25, 0.9);
+            border: 2px solid #ffaa00;
+            border-radius: 8px;
+            padding: 8px 16px;
+            color: #fff;
+            z-index: 10;
+            display: none;
+            text-align: center;
+            min-width: 220px;
+        }
+
+        #target-info-overlay .target-name { font-weight: bold; font-size: 13px; color: #00ffcc; }
+        #target-info-overlay .target-tags { font-size: 9px; color: #aaa; margin: 2px 0 4px 0; }
 
         /* --- RIGHT CONTROLS --- */
         .controls-right {
@@ -175,17 +195,8 @@
             gap: 6px;
         }
 
-        .camera-utility-row {
-            display: flex;
-            gap: 6px;
-        }
-
-        .radial-action-arc {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            align-items: flex-end;
-        }
+        .camera-utility-row { display: flex; gap: 6px; }
+        .radial-action-arc { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
 
         .btn {
             background: rgba(255, 255, 255, 0.85);
@@ -215,21 +226,8 @@
         }
 
         .action-btn:active { background: #00ffcc; }
-
-        .cam-btn {
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            font-size: 14px;
-        }
-
-        .mode-btn {
-            height: 38px;
-            padding: 0 8px;
-            border-radius: 18px;
-            font-size: 10px;
-            background: rgba(0, 255, 204, 0.85);
-        }
+        .cam-btn { width: 38px; height: 38px; border-radius: 50%; font-size: 14px; }
+        .mode-btn { height: 38px; padding: 0 8px; border-radius: 18px; font-size: 10px; background: rgba(0, 255, 204, 0.85); }
 
         #joystick-base {
             width: 110px;
@@ -284,29 +282,9 @@
             border-bottom: 2px solid #334455;
         }
 
-        .menu-header h2 {
-            margin: 0;
-            color: #00ffcc;
-            font-size: 14px;
-            letter-spacing: 1px;
-        }
-
-        .close-btn {
-            background: #ff4444;
-            color: #fff;
-            border: none;
-            padding: 4px 12px;
-            border-radius: 4px;
-            font-weight: bold;
-            font-size: 11px;
-            cursor: pointer;
-        }
-
-        .menu-body {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-        }
+        .menu-header h2 { margin: 0; color: #00ffcc; font-size: 14px; letter-spacing: 1px; }
+        .close-btn { background: #ff4444; color: #fff; border: none; padding: 4px 12px; border-radius: 4px; font-weight: bold; font-size: 11px; cursor: pointer; }
+        .menu-body { display: flex; flex: 1; overflow: hidden; }
 
         .equipment-panel {
             width: 48%;
@@ -318,42 +296,10 @@
             align-items: center;
         }
 
-        .paperdoll-container {
-            display: grid;
-            grid-template-columns: 50px 1fr 50px;
-            gap: 8px;
-            width: 100%;
-            height: 100%;
-            align-items: center;
-        }
-
-        .equip-column {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            justify-content: center;
-        }
-
-        .equip-slot {
-            width: 44px;
-            height: 44px;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid #667788;
-            border-radius: 6px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-        }
-
-        .equip-slot .slot-label {
-            font-size: 7px;
-            color: #8899aa;
-            position: absolute;
-            top: 2px;
-            left: 3px;
-        }
+        .paperdoll-container { display: grid; grid-template-columns: 50px 1fr 50px; gap: 8px; width: 100%; height: 100%; align-items: center; }
+        .equip-column { display: flex; flex-direction: column; gap: 6px; justify-content: center; }
+        .equip-slot { width: 44px; height: 44px; background: rgba(255, 255, 255, 0.08); border: 1px solid #667788; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+        .equip-slot .slot-label { font-size: 7px; color: #8899aa; position: absolute; top: 2px; left: 3px; }
 
         .character-avatar-box {
             background: rgba(0, 0, 0, 0.4);
@@ -369,46 +315,12 @@
             text-align: center;
         }
 
-        .inventory-panel {
-            width: 52%;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .tab-bar {
-            display: flex;
-            background: rgba(10, 14, 22, 0.8);
-            border-bottom: 1px solid #334455;
-        }
-
-        .tab-btn {
-            flex: 1;
-            padding: 8px 4px;
-            background: transparent;
-            border: none;
-            color: #8899aa;
-            font-size: 12px;
-            text-align: center;
-            cursor: pointer;
-        }
-
-        .tab-btn.active {
-            color: #00ffcc;
-            border-bottom: 2px solid #00ffcc;
-            background: rgba(0, 255, 204, 0.1);
-        }
-
-        .tab-content {
-            flex: 1;
-            padding: 10px;
-            overflow-y: auto;
-        }
-
-        .inv-grid-large {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 6px;
-        }
+        .inventory-panel { width: 52%; display: flex; flex-direction: column; }
+        .tab-bar { display: flex; background: rgba(10, 14, 22, 0.8); border-bottom: 1px solid #334455; }
+        .tab-btn { flex: 1; padding: 8px 4px; background: transparent; border: none; color: #8899aa; font-size: 11px; text-align: center; cursor: pointer; }
+        .tab-btn.active { color: #00ffcc; border-bottom: 2px solid #00ffcc; background: rgba(0, 255, 204, 0.1); }
+        .tab-content { flex: 1; padding: 10px; overflow-y: auto; }
+        .inv-grid-large { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 
         .inv-item-slot {
             aspect-ratio: 1;
@@ -423,15 +335,7 @@
             font-size: 10px;
             position: relative;
         }
-
-        .inv-item-slot .qty {
-            position: absolute;
-            bottom: 2px;
-            right: 4px;
-            font-size: 9px;
-            color: #00ffcc;
-            font-weight: bold;
-        }
+        .inv-item-slot .qty { position: absolute; bottom: 2px; right: 4px; font-size: 9px; color: #00ffcc; font-weight: bold; }
 
         .craft-recipe {
             background: rgba(255, 255, 255, 0.05);
@@ -446,39 +350,10 @@
 
         .craft-recipe-info b { color: #00ffcc; font-size: 12px; }
         .craft-recipe-info div { font-size: 9px; color: #aaa; margin-top: 2px; }
+        .craft-btn { background: #00ffcc; color: #000; border: none; padding: 6px 10px; border-radius: 4px; font-weight: bold; font-size: 10px; cursor: pointer; }
+        .craft-btn:disabled { background: #444; color: #888; cursor: not-allowed; }
 
-        .craft-btn {
-            background: #00ffcc;
-            color: #000;
-            border: none;
-            padding: 6px 10px;
-            border-radius: 4px;
-            font-weight: bold;
-            font-size: 10px;
-            cursor: pointer;
-        }
-
-        .craft-btn:disabled {
-            background: #444;
-            color: #888;
-            cursor: not-allowed;
-        }
-
-        #mobile-log {
-            position: absolute;
-            top: 45px;
-            left: 10px;
-            right: 10px;
-            color: #ff5555;
-            background: rgba(0,0,0,0.85);
-            padding: 6px;
-            font-size: 10px;
-            z-index: 100;
-            display: none;
-            border-radius: 4px;
-            max-height: 80px;
-            overflow-y: auto;
-        }
+        #mobile-log { position: absolute; top: 45px; left: 10px; right: 10px; color: #ff5555; background: rgba(0,0,0,0.85); padding: 6px; font-size: 10px; z-index: 100; display: none; border-radius: 4px; max-height: 80px; overflow-y: auto; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
@@ -486,6 +361,12 @@
 
     <div id="mobile-log"></div>
     <div id="canvas-container"></div>
+
+    <div id="target-info-overlay">
+        <div class="target-name" id="target-name-lbl">Forest Stalker</div>
+        <div class="target-tags" id="target-tags-lbl">HOSTILE | STRIKING | FIRE</div>
+        <div class="bar-container"><div class="bar-fill hp" id="target-hp-fill" style="width:100%;"></div></div>
+    </div>
 
     <div id="hud-bottom-left">
         <div id="minimap-box">MAP</div>
@@ -504,8 +385,9 @@
     <div id="hotbar">
         <div class="hotbar-slot"><span class="icon">🪵</span><span class="count" id="count-wood">0</span></div>
         <div class="hotbar-slot"><span class="icon">🪨</span><span class="count" id="count-stone">0</span></div>
-        <div class="hotbar-slot"><span class="icon">🫐</span><span class="count" id="count-berry">0</span></div>
-        <div class="hotbar-slot"><span class="icon">🍄</span><span class="count" id="count-shroom">0</span></div>
+        <div class="hotbar-slot"><span class="icon">🥩</span><span class="count" id="count-meat">0</span></div>
+        <div class="hotbar-slot"><span class="icon">📜</span><span class="count" id="count-hide">0</span></div>
+        <div class="hotbar-slot"><span class="icon">🧶</span><span class="count" id="count-fur">0</span></div>
     </div>
 
     <div class="controls-right">
@@ -543,6 +425,7 @@
                         <div style="font-size: 40px; margin-bottom: 4px;">🧍</div>
                         <b>Generic Character</b>
                         <span style="font-size:9px; color:#888;">Lv. 5 Adventurer</span>
+                        <span style="font-size:8px; color:#00ffcc; margin-top: 4px;">Type: STRIKING</span>
                     </div>
                     <div class="equip-column">
                         <div class="equip-slot"><span class="slot-label">OFF</span></div>
@@ -601,15 +484,19 @@
 
             let currentEnergy = 100;
             let currentHP = 100;
-            const inventory = { wood: 0, stone: 0, berry: 0, shroom: 0 };
+            const inventory = { wood: 0, stone: 0, berry: 0, shroom: 0, meat: 0, hide: 0, fur: 0 };
+
+            // Player Type
+            const PLAYER_TYPE = 'STRIKING';
 
             function updateUI() {
                 document.getElementById('bar-energy').style.width = currentEnergy + '%';
                 document.getElementById('bar-hp').style.width = currentHP + '%';
                 document.getElementById('count-wood').innerText = inventory.wood;
                 document.getElementById('count-stone').innerText = inventory.stone;
-                document.getElementById('count-berry').innerText = inventory.berry;
-                document.getElementById('count-shroom').innerText = inventory.shroom;
+                document.getElementById('count-meat').innerText = inventory.meat;
+                document.getElementById('count-hide').innerText = inventory.hide;
+                document.getElementById('count-fur').innerText = inventory.fur;
 
                 const invGrid = document.getElementById('inventory-grid');
                 if (invGrid) {
@@ -617,6 +504,9 @@
                     const items = [
                         { icon: '🪵', count: inventory.wood },
                         { icon: '🪨', count: inventory.stone },
+                        { icon: '🥩', count: inventory.meat },
+                        { icon: '📜', count: inventory.hide },
+                        { icon: '🧶', count: inventory.fur },
                         { icon: '🫐', count: inventory.berry },
                         { icon: '🍄', count: inventory.shroom }
                     ];
@@ -630,7 +520,6 @@
                     });
                 }
 
-                // Update craft button state based on current inventory
                 const wallBtn = document.getElementById('btn-craft-wall');
                 if (wallBtn) wallBtn.disabled = inventory.wood < 2;
 
@@ -772,12 +661,12 @@
                 g.position.set(x, groundY, z);
                 scene.add(g);
 
-                const itemData = { mesh: g, dropType, hp: 3, x, z, radius: propRadius };
+                const itemData = { isCreature: false, mesh: g, dropType, hp: 3, maxHp: 3, x, z, radius: propRadius };
                 harvestables.push(itemData);
                 obstacleColliders.push(itemData);
             }
 
-            for (let i = 0; i < 45; i++) {
+            for (let i = 0; i < 40; i++) {
                 const rx = (Math.random() - 0.5) * 90;
                 const rz = (Math.random() - 0.5) * 90;
                 if (Math.hypot(rx, rz) < 6) continue;
@@ -787,6 +676,176 @@
                 else if (r < 0.8) spawnProp('stone', rx, rz);
                 else spawnProp('bush', rx, rz);
             }
+
+            // --- UNIVERSAL CREATURE SYSTEM ---
+            const creatures = [];
+            const corpses = [];
+
+            // Multipliers: Type Triangle (Striking > Ranged > Special > Striking)
+            function getTypeMultiplier(attackerType, defenderType) {
+                if (attackerType === 'STRIKING' && defenderType === 'RANGED') return 1.5;
+                if (attackerType === 'RANGED' && defenderType === 'SPECIAL') return 1.5;
+                if (attackerType === 'SPECIAL' && defenderType === 'STRIKING') return 1.5;
+                if (attackerType === defenderType) return 1.0;
+                return 0.8;
+            }
+
+            // Multipliers: Element Matrix
+            function getElementMultiplier(attElem, defElem) {
+                if (attElem === 'FIRE' && defElem === 'EARTH') return 1.5;
+                if (attElem === 'EARTH' && defElem === 'WIND') return 1.5;
+                if (attElem === 'WIND' && defElem === 'WATER') return 1.5;
+                if (attElem === 'WATER' && defElem === 'FIRE') return 1.5;
+                return 1.0;
+            }
+
+            class Creature {
+                constructor(template) {
+                    this.isCreature = true;
+                    this.name = template.name;
+                    this.temperament = template.temperament; // DOCILE, WARY, HOSTILE
+                    this.type = template.type;               // STRIKING, RANGED, SPECIAL
+                    this.element = template.element;         // FIRE, WATER, EARTH, WIND, NEUTRAL
+                    
+                    this.hp = template.hp;
+                    this.maxHp = template.hp;
+                    this.neverSubmits = template.neverSubmits || false;
+
+                    this.state = 'IDLE'; // IDLE, FLEEING, HOSTILE, SUBMITTED
+                    this.radius = template.radius || 0.9;
+                    this.speed = template.speed || 3.5;
+                    this.aggroRadius = template.aggroRadius || 8.0;
+
+                    this.x = template.x;
+                    this.z = template.z;
+
+                    // Mesh Creation (Low Poly Placeholder)
+                    this.group = new THREE.Group();
+                    const bodyColor = template.color || 0xcc4444;
+                    const cBody = new THREE.Mesh(
+                        new THREE.BoxGeometry(1.0, 0.9, 1.4),
+                        new THREE.MeshStandardMaterial({ color: bodyColor, flatShading: true })
+                    );
+                    cBody.position.y = 0.5;
+                    this.group.add(cBody);
+
+                    // Submission Flag Indicator
+                    const flag = new THREE.Mesh(
+                        new THREE.ConeGeometry(0.2, 0.6, 4),
+                        new THREE.MeshBasicMaterial({ color: 0xffffff })
+                    );
+                    flag.position.set(0, 1.5, 0);
+                    flag.visible = false;
+                    this.flagMesh = flag;
+                    this.group.add(flag);
+
+                    const gY = getTerrainHeight(this.x, this.z);
+                    this.group.position.set(this.x, gY, this.z);
+                    scene.add(this.group);
+
+                    this.mesh = this.group;
+                }
+
+                takeDamage(amount, attackerType, attackerElement) {
+                    const typeMult = getTypeMultiplier(attackerType, this.type);
+                    const elemMult = getElementMultiplier(attackerElement, this.element);
+                    const finalDamage = Math.max(1, Math.round(amount * typeMult * elemMult));
+
+                    this.hp -= finalDamage;
+
+                    // Reaction Logic
+                    if (this.hp <= (this.maxHp * 0.10) && !this.neverSubmits) {
+                        this.state = 'SUBMITTED';
+                        this.flagMesh.visible = true;
+                        this.group.scale.set(0.8, 0.6, 0.8); // Kneel / Shrink visual
+                    } else if (this.temperament === 'DOCILE') {
+                        this.state = 'FLEEING';
+                    } else if (this.temperament === 'WARY' || this.temperament === 'HOSTILE') {
+                        if (this.state !== 'SUBMITTED') this.state = 'HOSTILE';
+                    }
+
+                    return finalDamage;
+                }
+
+                update(delta, playerPos) {
+                    if (this.hp <= 0) return;
+
+                    this.x = this.group.position.x;
+                    this.z = this.group.position.z;
+
+                    const distToPlayer = Math.hypot(playerPos.x - this.x, playerPos.z - this.z);
+
+                    // Auto-Aggro check for Hostile creatures
+                    if (this.temperament === 'HOSTILE' && distToPlayer < this.aggroRadius && this.state !== 'SUBMITTED') {
+                        this.state = 'HOSTILE';
+                    }
+
+                    if (this.state === 'HOSTILE') {
+                        // Move toward player
+                        const angle = Math.atan2(playerPos.x - this.x, playerPos.z - this.z);
+                        this.group.position.x += Math.sin(angle) * this.speed * delta;
+                        this.group.position.z += Math.cos(angle) * this.speed * delta;
+                        this.group.rotation.y = angle;
+
+                        // Attack player on contact
+                        if (distToPlayer < 1.4) {
+                            currentHP = Math.max(0, currentHP - 0.2);
+                            updateUI();
+                        }
+                    } else if (this.state === 'FLEEING') {
+                        // Move away from player
+                        const angle = Math.atan2(this.x - playerPos.x, this.z - playerPos.z);
+                        this.group.position.x += Math.sin(angle) * (this.speed * 1.3) * delta;
+                        this.group.position.z += Math.cos(angle) * (this.speed * 1.3) * delta;
+                        this.group.rotation.y = angle;
+                    }
+
+                    // Snap height to terrain
+                    this.group.position.y = getTerrainHeight(this.group.position.x, this.group.position.z);
+                }
+
+                die() {
+                    scene.remove(this.group);
+                    
+                    // Spawn Corpse Mesh
+                    const corpseGroup = new THREE.Group();
+                    const deadBody = new THREE.Mesh(
+                        new THREE.BoxGeometry(1.2, 0.4, 1.4),
+                        new THREE.MeshStandardMaterial({ color: 0x553333, flatShading: true })
+                    );
+                    deadBody.position.y = 0.2;
+                    corpseGroup.add(deadBody);
+
+                    const gY = getTerrainHeight(this.x, this.z);
+                    corpseGroup.position.set(this.x, gY, this.z);
+                    scene.add(corpseGroup);
+
+                    const corpseData = {
+                        mesh: corpseGroup,
+                        x: this.x,
+                        z: this.z,
+                        spawnTime: Date.now(),
+                        looted: false
+                    };
+
+                    corpses.push(corpseData);
+                }
+            }
+
+            // Spawn Sample Creatures (Representing Docile, Wary, and Hostile temperaments)
+            const creatureTemplates = [
+                { name: 'Forest Boar', temperament: 'WARY', type: 'STRIKING', element: 'EARTH', hp: 20, color: 0x8b4513, x: 12, z: 12 },
+                { name: 'Swift Stalker', temperament: 'HOSTILE', type: 'RANGED', element: 'FIRE', hp: 25, color: 0xd2691e, x: -18, z: 18 },
+                { name: 'Meadow Stag', temperament: 'DOCILE', type: 'SPECIAL', element: 'WIND', hp: 15, color: 0xdaa520, x: 15, z: -15 },
+                { name: 'Dire Bear', temperament: 'HOSTILE', type: 'STRIKING', element: 'FIRE', hp: 40, neverSubmits: true, color: 0x4a2e18, x: -25, z: -25 }
+            ];
+
+            creatureTemplates.forEach(t => {
+                const c = new Creature(t);
+                creatures.push(c);
+                harvestables.push(c);
+                obstacleColliders.push(c);
+            });
 
             // In-Inventory Crafting Handler
             window.craftItem = function(itemType) {
@@ -836,23 +895,58 @@
                     const h = harvestables[i];
                     const dist = Math.hypot(playerGroup.position.x - h.x, playerGroup.position.z - h.z);
                     if (dist < reach) {
-                        h.hp -= isPower ? 2 : 1;
-                        if (h.hp <= 0) {
-                            inventory[h.dropType] += isPower ? 2 : 1;
-                            updateUI();
-                            scene.remove(h.mesh);
+                        if (h.isCreature) {
+                            const baseDmg = isPower ? 8 : 5;
+                            h.takeDamage(baseDmg, PLAYER_TYPE, 'NEUTRAL');
+                            
+                            if (h.hp <= 0) {
+                                h.die();
 
-                            // Remove from colliders list as well
-                            const colIdx = obstacleColliders.indexOf(h);
-                            if (colIdx !== -1) obstacleColliders.splice(colIdx, 1);
+                                const colIdx = obstacleColliders.indexOf(h);
+                                if (colIdx !== -1) obstacleColliders.splice(colIdx, 1);
 
-                            harvestables.splice(i, 1);
-                            targetRing.visible = false;
+                                const cIdx = creatures.indexOf(h);
+                                if (cIdx !== -1) creatures.splice(cIdx, 1);
+
+                                harvestables.splice(i, 1);
+                                targetRing.visible = false;
+                            }
+                        } else {
+                            h.hp -= isPower ? 2 : 1;
+                            if (h.hp <= 0) {
+                                inventory[h.dropType] += isPower ? 2 : 1;
+                                updateUI();
+                                scene.remove(h.mesh);
+
+                                const colIdx = obstacleColliders.indexOf(h);
+                                if (colIdx !== -1) obstacleColliders.splice(colIdx, 1);
+
+                                harvestables.splice(i, 1);
+                                targetRing.visible = false;
+                            }
                         }
                         break;
                     }
                 }
             });
+
+            // Corpse Harvesting / Interaction
+            document.getElementById('btn-interact').onclick = () => {
+                for (let i = corpses.length - 1; i >= 0; i--) {
+                    const c = corpses[i];
+                    const dist = Math.hypot(playerGroup.position.x - c.x, playerGroup.position.z - c.z);
+                    if (dist < 2.2 && !c.looted) {
+                        c.looted = true;
+                        inventory.meat += 2;
+                        inventory.hide += 1;
+                        inventory.fur += 1;
+                        updateUI();
+                        scene.remove(c.mesh);
+                        corpses.splice(i, 1);
+                        break;
+                    }
+                }
+            };
 
             document.getElementById('btn-jump').onclick = () => {
                 if (isGrounded) {
@@ -962,7 +1056,6 @@
                     const nextX = playerGroup.position.x + dx;
                     const nextZ = playerGroup.position.z + dz;
 
-                    // Axis-Separated Collision Checking
                     if (canMoveTo(nextX, playerGroup.position.z)) {
                         playerGroup.position.x = nextX;
                     }
@@ -993,18 +1086,42 @@
                     }
                 }
 
+                // Creature AI Updates
+                creatures.forEach(c => c.update(delta, playerGroup.position));
+
+                // Despawn Dead Corpses older than 10 minutes (600,000ms)
+                const now = Date.now();
+                for (let i = corpses.length - 1; i >= 0; i--) {
+                    if (now - corpses[i].spawnTime > 600000) {
+                        scene.remove(corpses[i].mesh);
+                        corpses.splice(i, 1);
+                    }
+                }
+
+                // Target Lock & HUD Update
                 let closest = null;
-                let minDist = 3.0;
+                let minDist = 3.5;
                 harvestables.forEach(h => {
                     const d = Math.hypot(playerGroup.position.x - h.x, playerGroup.position.z - h.z);
                     if (d < minDist) { minDist = d; closest = h; }
                 });
 
+                const targetOverlay = document.getElementById('target-info-overlay');
                 if (closest) {
                     targetRing.position.set(closest.x, getTerrainHeight(closest.x, closest.z) + 0.1, closest.z);
                     targetRing.visible = true;
+
+                    if (closest.isCreature) {
+                        targetOverlay.style.display = 'block';
+                        document.getElementById('target-name-lbl').innerText = closest.name + (closest.state === 'SUBMITTED' ? ' (SUBMITTED)' : '');
+                        document.getElementById('target-tags-lbl').innerText = `${closest.temperament} | ${closest.type} | ${closest.element}`;
+                        document.getElementById('target-hp-fill').style.width = Math.max(0, (closest.hp / closest.maxHp) * 100) + '%';
+                    } else {
+                        targetOverlay.style.display = 'none';
+                    }
                 } else {
                     targetRing.visible = false;
+                    targetOverlay.style.display = 'none';
                 }
 
                 camera.position.x = playerGroup.position.x + Math.sin(cameraAngle) * CAM_DISTANCE;
