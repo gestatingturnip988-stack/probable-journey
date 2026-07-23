@@ -436,4 +436,47 @@ html, body {
     aspect-ratio: 1;
     background: rgba(255, 255, 255, 0.08);
     border: 1px solid #556677;
-    border
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 10px;
+    position: relative;
+}
+
+.inv-item-slot .qty {
+    position: absolute;
+    bottom: 2px;
+    right: 4px;
+    font-size: 9px;
+    color: #00ffcc;
+    font-weight: bold;
+}
+
+.skill-item {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid #445566;
+    border-radius: 6px;
+    padding: 8px;
+    margin-bottom: 6px;
+}
+
+.skill-item b { color: #00ffcc; font-size: 12px; }
+
+#mobile-log {
+    position: absolute;
+    top: 45px;
+    left: 10px;
+    right: 10px;
+    color: #ff5555;
+    background: rgba(0,0,0,0.85);
+    padding: 6px;
+    font-size: 10px;
+    z-index: 100;
+    display: none;
+    border-radius: 4px;
+    max-height: 80px;
+    overflow-y: auto;
+}
