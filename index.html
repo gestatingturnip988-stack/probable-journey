@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3D RPG World Prototype</title>
+    <title>3D RPG World - Combined Phases</title>
     <style>
         * {
             box-sizing: border-box;
@@ -31,7 +31,7 @@
             z-index: 1;
         }
 
-        /* --- HUD OVERLAYS (Matching Sketch 1) --- */
+        /* --- HUD OVERLAYS --- */
         #hud-bottom-left {
             position: absolute;
             bottom: 15px;
@@ -141,8 +141,8 @@
         }
 
         .hotbar-slot {
-            width: 44px;
-            height: 44px;
+            width: 40px;
+            height: 40px;
             background: rgba(255,255,255,0.15);
             border: 2px solid #aaa;
             border-radius: 6px;
@@ -164,7 +164,7 @@
             color: #00ffcc;
         }
 
-        /* --- RIGHT RADIAL CONTROL PANEL (Matching Sketch 1) --- */
+        /* --- RIGHT CONTROL PANEL --- */
         .controls-right {
             position: absolute;
             bottom: 15px;
@@ -173,18 +173,18 @@
             display: flex;
             flex-direction: column;
             align-items: flex-end;
-            gap: 8px;
+            gap: 6px;
         }
 
         .camera-utility-row {
             display: flex;
             gap: 6px;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
 
         .radial-action-arc {
-            display: flex;
-            flex-direction: column;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 6px;
             align-items: flex-end;
         }
@@ -194,7 +194,7 @@
             border: 2px solid #fff;
             border-radius: 8px;
             font-weight: bold;
-            font-size: 11px;
+            font-size: 10px;
             color: #000;
             display: flex;
             justify-content: center;
@@ -204,12 +204,12 @@
         }
 
         .action-btn {
-            width: 60px;
-            height: 42px;
-            border-radius: 20px;
+            width: 62px;
+            height: 40px;
+            border-radius: 18px;
             background: #ffaa00;
             color: #000;
-            font-size: 10px;
+            font-size: 9px;
             border: 2px solid #fff;
             display: flex;
             flex-direction: column;
@@ -226,30 +226,30 @@
         }
 
         .action-btn .cost {
-            font-size: 8px;
-            color: #333;
+            font-size: 7px;
+            color: #222;
             font-weight: normal;
         }
 
         .cam-btn {
-            width: 38px;
-            height: 38px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
-            font-size: 14px;
+            font-size: 13px;
         }
 
         .mode-btn {
-            height: 38px;
+            height: 36px;
             padding: 0 8px;
             border-radius: 18px;
-            font-size: 10px;
+            font-size: 9px;
             background: rgba(0, 255, 204, 0.85);
         }
 
         /* Joystick Base & Knob */
         #joystick-base {
-            width: 110px;
-            height: 110px;
+            width: 100px;
+            height: 100px;
             background: rgba(255, 255, 255, 0.15);
             border: 2px solid rgba(255, 255, 255, 0.5);
             border-radius: 50%;
@@ -259,8 +259,8 @@
         }
 
         #joystick-knob {
-            width: 46px;
-            height: 46px;
+            width: 42px;
+            height: 42px;
             background: rgba(0, 255, 204, 0.85);
             border: 2px solid #fff;
             border-radius: 50%;
@@ -271,7 +271,7 @@
             pointer-events: none;
         }
 
-        /* --- FULL MENU INTERFACE (Matching Sketch 2) --- */
+        /* --- FULL MENU INTERFACE --- */
         #menu-modal {
             position: absolute;
             top: 50%;
@@ -352,8 +352,8 @@
         }
 
         .equip-slot {
-            width: 48px;
-            height: 48px;
+            width: 44px;
+            height: 44px;
             background: rgba(255, 255, 255, 0.08);
             border: 1px solid #667788;
             border-radius: 6px;
@@ -454,30 +454,21 @@
             font-weight: bold;
         }
 
-        .skill-item {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid #445566;
-            border-radius: 6px;
-            padding: 8px;
-            margin-bottom: 6px;
-        }
-
-        .skill-item b { color: #00ffcc; font-size: 12px; }
-
         #mobile-log {
             position: absolute;
-            top: 45px;
+            top: 10px;
             left: 10px;
             right: 10px;
             color: #ff5555;
-            background: rgba(0,0,0,0.85);
-            padding: 6px;
-            font-size: 10px;
-            z-index: 100;
+            background: rgba(0,0,0,0.9);
+            padding: 8px;
+            font-size: 11px;
+            z-index: 999;
             display: none;
             border-radius: 4px;
-            max-height: 80px;
+            max-height: 100px;
             overflow-y: auto;
+            border: 1px solid #ff3333;
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -491,7 +482,7 @@
         <div id="minimap-box">MAP</div>
         <div id="status-bars">
             <div class="bar-container"><div class="bar-fill exp"></div><span class="bar-label">EXP Lv.5</span></div>
-            <div class="bar-container"><div class="bar-fill hp"></div><span class="bar-label">HEALTH</span></div>
+            <div class="bar-container"><div class="bar-fill hp" id="bar-hp"></div><span class="bar-label">HEALTH</span></div>
             <div class="bar-container"><div class="bar-fill energy" id="bar-energy"></div><span class="bar-label">ENERGY</span></div>
             <div class="bar-container"><div class="bar-fill hunger"></div><span class="bar-label">HUNGER</span></div>
         </div>
@@ -516,9 +507,10 @@
         </div>
 
         <div class="radial-action-arc">
-            <button id="btn-action-1" class="btn action-btn">ATTACK ⚔️<span class="cost">10 Energy</span></button>
-            <button id="btn-action-2" class="btn action-btn">POWER 💥<span class="cost">25 Energy</span></button>
-            <button id="btn-action-3" class="btn action-btn">HARVEST 🪓<span class="cost">8 Energy</span></button>
+            <button id="btn-attack" class="btn action-btn">ATTACK ⚔️<span class="cost">Tap/Hold</span></button>
+            <button id="btn-interact" class="btn action-btn">INTERACT 🤝<span class="cost">Action</span></button>
+            <button id="btn-jump" class="btn action-btn">JUMP 🦘<span class="cost">5 Stamina</span></button>
+            <button id="btn-bow" class="btn action-btn">BOW 🏹<span class="cost">12 Energy</span></button>
         </div>
 
         <div id="joystick-base">
@@ -528,11 +520,10 @@
 
     <div id="menu-modal">
         <div class="menu-header">
-            <h2>MY EQUIPMENT & INVENTORY</h2>
+            <h2>EQUIPMENT & INVENTORY</h2>
             <button id="btn-menu-close" class="close-btn">✕ CLOSE</button>
         </div>
         <div class="menu-body">
-            
             <div class="equipment-panel">
                 <div class="paperdoll-container">
                     <div class="equip-column">
@@ -542,15 +533,13 @@
                         <div class="equip-slot"><span class="slot-label">BACK</span></div>
                         <div class="equip-slot"><span class="slot-label">EXTRA</span></div>
                     </div>
-
                     <div class="character-avatar-box">
                         <div class="avatar-placeholder">🧍</div>
-                        <b>Generic Character</b>
-                        <span style="font-size:9px; color:#888; margin-top:4px;">Lv. 5 Adventurer</span>
+                        <b>Adventurer</b>
+                        <span style="font-size:9px; color:#888; margin-top:4px;">Lv. 5 Explorer</span>
                     </div>
-
                     <div class="equip-column">
-                        <div class="equip-slot"><span class="slot-label">OFFHAND</span></div>
+                        <div class="equip-slot"><span class="slot-label">OFFHAND</span><span class="item-icon">🏹</span></div>
                         <div class="equip-slot"><span class="slot-label">TORSO</span><span class="item-icon">🛡️</span></div>
                         <div class="equip-slot"><span class="slot-label">WRIST</span></div>
                         <div class="equip-slot"><span class="slot-label">LEGS</span></div>
@@ -558,59 +547,33 @@
                     </div>
                 </div>
             </div>
-
             <div class="inventory-panel">
                 <div class="tab-bar">
                     <button class="tab-btn active" onclick="switchTab('inv')">🎒</button>
                     <button class="tab-btn" onclick="switchTab('skills')">⚡</button>
                     <button class="tab-btn" onclick="switchTab('quests')">📜</button>
-                    <button class="tab-btn" onclick="switchTab('options')">⚙️</button>
-                    <button class="tab-btn" onclick="switchTab('journal')">📖</button>
                 </div>
-
                 <div class="tab-content" id="tab-inv">
                     <div class="inv-grid-large" id="inventory-grid"></div>
                 </div>
-
                 <div class="tab-content" id="tab-skills" style="display:none; color:#aaa; font-size:11px;">
-                    <div class="skill-item">
-                        <b>🪵 Lumberjack (Passive - Lv.2)</b>
-                        <div style="font-size:9px; color:#8899aa; margin-top:2px;">Chopping trees grants +10% yield and reduces stamina cost.</div>
-                    </div>
-                    <div class="skill-item">
-                        <b>🪨 Mining Master (Passive - Lv.1)</b>
-                        <div style="font-size:9px; color:#8899aa; margin-top:2px;">Increases stone gathering rate by +15%.</div>
-                    </div>
-                    <div class="skill-item">
-                        <b>🏃 Swift Foot (Passive - Lv.3)</b>
-                        <div style="font-size:9px; color:#8899aa; margin-top:2px;">Base movement speed increased by +8%.</div>
-                    </div>
+                    <p><b>• Taming Master:</b> Can tame submissive creatures below 10% HP.</p>
+                    <p>• <b>Lumberjack:</b> +10% Yield from trees.</p>
                 </div>
-
                 <div class="tab-content" id="tab-quests" style="display:none; color:#aaa; font-size:11px;">
-                    <p><b>Active Quests</b></p>
-                    <p>• Gather 5 Wood logs<br>• Harvest 3 Berries</p>
-                </div>
-
-                <div class="tab-content" id="tab-options" style="display:none; color:#aaa; font-size:11px;">
-                    <p><b>Game Options</b></p>
-                    <p>Audio: 100%<br>Graphics: Medium</p>
-                </div>
-
-                <div class="tab-content" id="tab-journal" style="display:none; color:#aaa; font-size:11px;">
-                    <p><b>World Lore</b></p>
-                    <p>Discovered: The Great Whispering Forest.</p>
+                    <p><b>Active Quest:</b> Explore the island shipwreck and tame a companion creature.</p>
                 </div>
             </div>
-
         </div>
     </div>
 
     <script>
         function showMobileError(msg) {
             const logEl = document.getElementById('mobile-log');
-            logEl.style.display = 'block';
-            logEl.innerText += '[ERR] ' + msg + '\n';
+            if (logEl) {
+                logEl.style.display = 'block';
+                logEl.innerText += '[ERR] ' + msg + '\n';
+            }
         }
 
         window.onerror = function(msg, url, lineNo) {
@@ -618,438 +581,454 @@
             return false;
         };
 
-        try {
-            // Energy System & Inventory Data
-            const maxEnergy = 100;
-            let currentEnergy = 100;
-            const energyRegenRate = 12; // Energy per second
+        window.switchTab = function(tabName) {
+            ['inv', 'skills', 'quests'].forEach((t, i) => {
+                const c = document.getElementById(`tab-${t}`);
+                if (c) c.style.display = (t === tabName) ? 'block' : 'none';
+                const btn = document.querySelectorAll('.tab-btn')[i];
+                if (btn) btn.classList.toggle('active', t === tabName);
+            });
+        };
 
-            const inventory = { wood: 0, stone: 0, berry: 0, shroom: 0 };
+        window.addEventListener('DOMContentLoaded', () => {
+            try {
+                const container = document.getElementById('canvas-container');
+                if (!container) return;
 
-            function updateEnergyDisplay() {
-                const bar = document.getElementById('bar-energy');
-                const pct = Math.max(0, Math.min(100, (currentEnergy / maxEnergy) * 100));
-                bar.style.width = pct + '%';
+                // Game State & Inventory
+                const maxEnergy = 100;
+                let currentEnergy = 100;
+                let currentHP = 100;
+                const inventory = { wood: 0, stone: 0, berry: 0, shroom: 0, ore: 0 };
 
-                // Toggle action button states based on available energy
-                toggleButtonState('btn-action-1', currentEnergy >= 10);
-                toggleButtonState('btn-action-2', currentEnergy >= 25);
-                toggleButtonState('btn-action-3', currentEnergy >= 8);
-            }
-
-            function toggleButtonState(id, enabled) {
-                const btn = document.getElementById(id);
-                if (enabled) {
-                    btn.classList.remove('disabled');
-                } else {
-                    btn.classList.add('disabled');
+                function updateDisplays() {
+                    const barE = document.getElementById('bar-energy');
+                    const barH = document.getElementById('bar-hp');
+                    if (barE) barE.style.width = Math.max(0, (currentEnergy / maxEnergy) * 100) + '%';
+                    if (barH) barH.style.width = Math.max(0, currentHP) + '%';
                 }
-            }
 
-            function consumeEnergy(amount) {
-                if (currentEnergy >= amount) {
-                    currentEnergy -= amount;
-                    updateEnergyDisplay();
-                    return true;
-                }
-                return false;
-            }
-
-            function updateInventoryUI() {
-                document.getElementById('count-wood').innerText = inventory.wood;
-                document.getElementById('count-stone').innerText = inventory.stone;
-                document.getElementById('count-berry').innerText = inventory.berry;
-                document.getElementById('count-shroom').innerText = inventory.shroom;
-
-                const invGrid = document.getElementById('inventory-grid');
-                invGrid.innerHTML = '';
-
-                const items = [
-                    { icon: '🪵', name: 'Wood', count: inventory.wood },
-                    { icon: '🪨', name: 'Stone', count: inventory.stone },
-                    { icon: '🫐', name: 'Berry', count: inventory.berry },
-                    { icon: '🍄', name: 'Shroom', count: inventory.shroom }
-                ];
-
-                items.forEach(item => {
-                    if (item.count > 0) {
-                        const slot = document.createElement('div');
-                        slot.className = 'inv-item-slot';
-                        slot.innerHTML = `<span style="font-size:16px;">${item.icon}</span><span class="qty">${item.count}</span>`;
-                        invGrid.appendChild(slot);
-                    }
-                });
-
-                const totalSlots = 16;
-                const currentCount = invGrid.children.length;
-                for (let i = currentCount; i < totalSlots; i++) {
-                    const slot = document.createElement('div');
-                    slot.className = 'inv-item-slot';
-                    slot.style.opacity = '0.3';
-                    invGrid.appendChild(slot);
-                }
-            }
-
-            // Tab Switcher
-            window.switchTab = function(tabName) {
-                const tabs = ['inv', 'skills', 'quests', 'options', 'journal'];
-                tabs.forEach((t, index) => {
-                    const content = document.getElementById(`tab-${t}`);
-                    if (content) content.style.display = (t === tabName) ? 'block' : 'none';
-                    
-                    const btn = document.querySelectorAll('.tab-btn')[index];
-                    if (btn) {
-                        if (t === tabName) btn.classList.add('active');
-                        else btn.classList.remove('active');
-                    }
-                });
-            };
-
-            const scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x1a1a24);
-
-            const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 10, 14);
-            camera.lookAt(0, 0, 0);
-
-            const renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            document.getElementById('canvas-container').appendChild(renderer.domElement);
-
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
-            scene.add(ambientLight);
-
-            const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
-            dirLight.position.set(20, 40, 20);
-            scene.add(dirLight);
-
-            const WORLD_SIZE = 120;
-            const HALF_WORLD = WORLD_SIZE / 2;
-
-            const grid = new THREE.GridHelper(WORLD_SIZE, 60, 0x00ffcc, 0x334433);
-            scene.add(grid);
-
-            const ground = new THREE.Mesh(
-                new THREE.PlaneGeometry(WORLD_SIZE, WORLD_SIZE),
-                new THREE.MeshStandardMaterial({ color: 0x182e18 })
-            );
-            ground.rotation.x = -Math.PI / 2;
-            scene.add(ground);
-
-            const playerRadius = 0.6;
-            const playerGroup = new THREE.Group();
-
-            const playerCube = new THREE.Mesh(
-                new THREE.BoxGeometry(1.2, 1.2, 1.2),
-                new THREE.MeshStandardMaterial({ color: 0x3388ff })
-            );
-            playerCube.position.y = 0.6;
-            playerGroup.add(playerCube);
-
-            const playerPointer = new THREE.Mesh(
-                new THREE.BoxGeometry(0.3, 0.3, 0.3),
-                new THREE.MeshStandardMaterial({ color: 0xff3333 })
-            );
-            playerPointer.position.set(0, 0.6, -0.7);
-            playerGroup.add(playerPointer);
-
-            scene.add(playerGroup);
-
-            const harvestables = [];
-            const droppedItems = [];
-
-            function createTree(x, z) {
-                const group = new THREE.Group();
-                const trunk = new THREE.Mesh(
-                    new THREE.CylinderGeometry(0.2, 0.3, 1),
-                    new THREE.MeshStandardMaterial({ color: 0x5c4033 })
-                );
-                trunk.position.y = 0.5;
-                group.add(trunk);
-
-                const leaves = new THREE.Mesh(
-                    new THREE.ConeGeometry(1.2, 2.5, 6),
-                    new THREE.MeshStandardMaterial({ color: 0x2e8b57 })
-                );
-                leaves.position.y = 2.0;
-                group.add(leaves);
-
-                group.position.set(x, 0, z);
-                scene.add(group);
-
-                harvestables.push({ mesh: group, type: 'tree', dropType: 'wood', hp: 3, x: x, z: z, radius: 0.9 });
-            }
-
-            function createBoulder(x, z) {
-                const rock = new THREE.Mesh(
-                    new THREE.DodecahedronGeometry(1, 1),
-                    new THREE.MeshStandardMaterial({ color: 0x777788, flatShading: true })
-                );
-                rock.position.set(x, 0.7, z);
-                scene.add(rock);
-
-                harvestables.push({ mesh: rock, type: 'boulder', dropType: 'stone', hp: 4, x: x, z: z, radius: 1.0 });
-            }
-
-            function createBush(x, z) {
-                const bush = new THREE.Mesh(
-                    new THREE.IcosahedronGeometry(0.8, 1),
-                    new THREE.MeshStandardMaterial({ color: 0x3a9d23, flatShading: true })
-                );
-                bush.position.set(x, 0.5, z);
-                scene.add(bush);
-
-                harvestables.push({ mesh: bush, type: 'bush', dropType: 'berry', hp: 2, x: x, z: z, radius: 0.7 });
-            }
-
-            function spawnDrop(x, z, itemType) {
-                let color = 0x8b5a2b;
-                if (itemType === 'stone') color = 0xaaaaaa;
-                if (itemType === 'berry') color = 0xff0055;
-
-                const dropMesh = new THREE.Mesh(
-                    new THREE.BoxGeometry(0.4, 0.4, 0.4),
-                    new THREE.MeshStandardMaterial({ color: color })
-                );
-                dropMesh.position.set(x, 0.2, z);
-                scene.add(dropMesh);
-
-                droppedItems.push({ mesh: dropMesh, type: itemType, x: x, z: z });
-            }
-
-            function populateNodes() {
-                for (let i = 0; i < 40; i++) {
-                    const x = (Math.random() - 0.5) * (WORLD_SIZE - 15);
-                    const z = (Math.random() - 0.5) * (WORLD_SIZE - 15);
-                    if (Math.hypot(x, z) < 6) continue;
-
-                    const r = Math.random();
-                    if (r < 0.5) createTree(x, z);
-                    else if (r < 0.8) createBoulder(x, z);
-                    else createBush(x, z);
-                }
-            }
-            populateNodes();
-
-            function checkCollisions(targetX, targetZ) {
-                const boundaryLimit = HALF_WORLD - 1.0;
-                if (Math.abs(targetX) > boundaryLimit || Math.abs(targetZ) > boundaryLimit) return true;
-
-                for (let h of harvestables) {
-                    if (Math.hypot(targetX - h.x, targetZ - h.z) < (playerRadius + h.radius)) {
+                function consumeEnergy(amt) {
+                    if (currentEnergy >= amt) {
+                        currentEnergy -= amt;
+                        updateDisplays();
                         return true;
                     }
-                }
-                return false;
-            }
-
-            // Action System
-            function performBasicAttack() {
-                if (!consumeEnergy(10)) return;
-                // Swing animation trigger / normal attack hit range
-                triggerHit(1.8, 1);
-            }
-
-            function performPowerAttack() {
-                if (!consumeEnergy(25)) return;
-                // Heavy attack trigger with larger reach and double damage
-                triggerHit(2.6, 2);
-            }
-
-            function performHarvest() {
-                if (!consumeEnergy(8)) return;
-                // Dedicated harvesting hit
-                triggerHit(2.0, 1);
-            }
-
-            function triggerHit(rangeBonus, damageVal) {
-                for (let i = harvestables.length - 1; i >= 0; i--) {
-                    const h = harvestables[i];
-                    const dist = Math.hypot(playerGroup.position.x - h.x, playerGroup.position.z - h.z);
-
-                    if (dist <= (playerRadius + h.radius + rangeBonus)) {
-                        h.hp -= damageVal;
-                        h.mesh.position.x += (Math.random() - 0.5) * 0.25;
-
-                        if (h.hp <= 0) {
-                            scene.remove(h.mesh);
-                            spawnDrop(h.x, h.z, h.dropType);
-                            harvestables.splice(i, 1);
-                        }
-                        return;
-                    }
-                }
-            }
-
-            function updateDrops() {
-                for (let i = droppedItems.length - 1; i >= 0; i--) {
-                    const item = droppedItems[i];
-                    const dist = Math.hypot(playerGroup.position.x - item.x, playerGroup.position.z - item.z);
-
-                    if (dist < 1.5) {
-                        inventory[item.type] = (inventory[item.type] || 0) + 1;
-                        updateInventoryUI();
-
-                        scene.remove(item.mesh);
-                        droppedItems.splice(i, 1);
-                    }
-                }
-            }
-
-            // Virtual Joystick Logic
-            let joystickVector = { x: 0, y: 0 };
-            const baseEl = document.getElementById('joystick-base');
-            const knobEl = document.getElementById('joystick-knob');
-            const maxRadius = 40;
-
-            function handleJoystickMove(e) {
-                e.preventDefault();
-                const touch = e.touches ? e.touches[0] : e;
-                const rect = baseEl.getBoundingClientRect();
-                const centerX = rect.left + rect.width / 2;
-                const centerY = rect.top + rect.height / 2;
-
-                let dx = touch.clientX - centerX;
-                let dy = touch.clientY - centerY;
-                const dist = Math.hypot(dx, dy);
-
-                if (dist > maxRadius) {
-                    dx = (dx / dist) * maxRadius;
-                    dy = (dy / dist) * maxRadius;
+                    return false;
                 }
 
-                knobEl.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
-                
-                if (dist < 6) {
-                    joystickVector = { x: 0, y: 0 };
-                } else {
-                    joystickVector = { x: dx / maxRadius, y: dy / maxRadius };
-                }
-            }
-
-            function resetJoystick(e) {
-                if (e) e.preventDefault();
-                knobEl.style.transform = `translate(-50%, -50%)`;
-                joystickVector = { x: 0, y: 0 };
-            }
-
-            baseEl.addEventListener('touchstart', handleJoystickMove, { passive: false });
-            baseEl.addEventListener('touchmove', handleJoystickMove, { passive: false });
-            baseEl.addEventListener('touchend', resetJoystick, { passive: false });
-            baseEl.addEventListener('touchcancel', resetJoystick, { passive: false });
-
-            // Camera Toggle
-            let isAutoCam = false;
-            const camModeBtn = document.getElementById('btn-cam-mode');
-            camModeBtn.onclick = () => {
-                isAutoCam = !isAutoCam;
-                camModeBtn.innerText = isAutoCam ? '🎥 AUTO' : '🔒 FREE';
-                camModeBtn.style.background = isAutoCam ? '#ffaa00' : 'rgba(0, 255, 204, 0.85)';
-            };
-
-            let camRotInput = 0;
-            function bindCamButton(id, val) {
-                const btn = document.getElementById(id);
-                btn.addEventListener('touchstart', (e) => { e.preventDefault(); camRotInput = val; }, { passive: false });
-                btn.addEventListener('touchend', (e) => { e.preventDefault(); camRotInput = 0; }, { passive: false });
-            }
-            bindCamButton('btn-cam-left', -1);
-            bindCamButton('btn-cam-right', 1);
-
-            // Radial Action Buttons Bindings
-            document.getElementById('btn-action-1').onclick = performBasicAttack;
-            document.getElementById('btn-action-2').onclick = performPowerAttack;
-            document.getElementById('btn-action-3').onclick = performHarvest;
-
-            // Menu Modal Control
-            const menuModal = document.getElementById('menu-modal');
-            document.getElementById('btn-menu-open').onclick = () => {
-                updateInventoryUI();
-                menuModal.style.display = 'flex';
-            };
-            document.getElementById('btn-menu-close').onclick = () => {
-                menuModal.style.display = 'none';
-            };
-
-            updateInventoryUI();
-            updateEnergyDisplay();
-
-            // Game Loop
-            const clock = new THREE.Clock();
-            const moveSpeed = 8;
-            const camRotateSpeed = 2.0;
-
-            let cameraAngle = 0;
-            const cameraDistance = 14;
-            const cameraHeight = 10;
-
-            function animate() {
-                requestAnimationFrame(animate);
-
-                const delta = clock.getDelta();
-                const moveStep = moveSpeed * delta;
-                const rotStep = camRotateSpeed * delta;
-
-                // Energy Regeneration
-                if (currentEnergy < maxEnergy) {
-                    currentEnergy = Math.min(maxEnergy, currentEnergy + energyRegenRate * delta);
-                    updateEnergyDisplay();
+                function updateInventoryUI() {
+                    ['wood', 'stone', 'berry', 'shroom'].forEach(k => {
+                        const el = document.getElementById('count-' + k);
+                        if (el) el.innerText = inventory[k] || 0;
+                    });
                 }
 
-                if (camRotInput !== 0) {
-                    cameraAngle += camRotInput * rotStep;
-                }
+                // 3D Scene Initialization
+                const scene = new THREE.Scene();
+                scene.background = new THREE.Color(0x111622);
 
-                const jx = joystickVector.x;
-                const jy = joystickVector.y;
-
-                if (Math.abs(jx) > 0.05 || Math.abs(jy) > 0.05) {
-                    const worldDx = (jx * Math.cos(cameraAngle) + jy * Math.sin(cameraAngle)) * moveStep;
-                    const worldDz = (-jx * Math.sin(cameraAngle) + jy * Math.cos(cameraAngle)) * moveStep;
-
-                    const nextX = playerGroup.position.x + worldDx;
-                    const nextZ = playerGroup.position.z + worldDz;
-
-                    if (!checkCollisions(nextX, playerGroup.position.z)) {
-                        playerGroup.position.x = nextX;
-                    }
-                    if (!checkCollisions(playerGroup.position.x, nextZ)) {
-                        playerGroup.position.z = nextZ;
-                    }
-
-                    const targetAngle = Math.atan2(worldDx, worldDz);
-                    playerGroup.rotation.y = targetAngle;
-
-                    if (isAutoCam && camRotInput === 0) {
-                        const desiredCamAngle = targetAngle + Math.PI;
-                        let angleDiff = desiredCamAngle - cameraAngle;
-                        angleDiff = Math.atan2(Math.sin(angleDiff), Math.cos(angleDiff));
-                        cameraAngle += angleDiff * delta * 1.5;
-                    }
-                }
-
-                updateDrops();
-
-                camera.position.x = playerGroup.position.x + Math.sin(cameraAngle) * cameraDistance;
-                camera.position.z = playerGroup.position.z + Math.cos(cameraAngle) * cameraDistance;
-                camera.position.y = playerGroup.position.y + cameraHeight;
-                camera.lookAt(playerGroup.position.x, playerGroup.position.y + 0.6, playerGroup.position.z);
-
-                renderer.render(scene, camera);
-            }
-
-            animate();
-
-            window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
+                const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+                const renderer = new THREE.WebGLRenderer({ antialias: true });
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
                 renderer.setSize(window.innerWidth, window.innerHeight);
-            });
+                container.appendChild(renderer.domElement);
 
-        } catch (err) {
-            showMobileError(err.message);
-        }
+                // Lighting (Sun/Day-Night Cycle)
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+                scene.add(ambientLight);
+
+                const sunLight = new THREE.DirectionalLight(0xfffaed, 1.0);
+                sunLight.position.set(30, 50, 20);
+                scene.add(sunLight);
+
+                // World Geometry (Elevation & Biomes)
+                const WORLD_SIZE = 140;
+                const HALF_WORLD = WORLD_SIZE / 2;
+
+                const groundGeo = new THREE.PlaneGeometry(WORLD_SIZE, WORLD_SIZE, 32, 32);
+                groundGeo.rotateX(-Math.PI / 2);
+                const pos = groundGeo.attributes.position;
+                for (let i = 0; i < pos.count; i++) {
+                    const x = pos.getX(i);
+                    const z = pos.getZ(i);
+                    // Elevation curves / cliffs
+                    let y = Math.sin(x * 0.05) * Math.cos(z * 0.05) * 2.5;
+                    if (x < -40) y -= 2.5; // Water beach slope
+                    pos.setY(i, y);
+                }
+                groundGeo.computeVertexNormals();
+
+                const groundMat = new THREE.MeshStandardMaterial({ color: 0x224422, flatShading: true });
+                const groundMesh = new THREE.Mesh(groundGeo, groundMat);
+                scene.add(groundMesh);
+
+                // Water Lake Area
+                const waterMesh = new THREE.Mesh(
+                    new THREE.PlaneGeometry(50, WORLD_SIZE),
+                    new THREE.MeshStandardMaterial({ color: 0x0066aa, transparent: true, opacity: 0.7 })
+                );
+                waterMesh.rotation.x = -Math.PI / 2;
+                waterMesh.position.set(-50, -1.2, 0);
+                scene.add(waterMesh);
+
+                // Shipwreck Spawn Intro
+                const shipGroup = new THREE.Group();
+                const shipHull = new THREE.Mesh(new THREE.BoxGeometry(6, 3, 12), new THREE.MeshStandardMaterial({ color: 0x3d2314 }));
+                shipHull.rotation.z = 0.3;
+                shipGroup.add(shipHull);
+                shipGroup.position.set(-45, -0.5, -30);
+                scene.add(shipGroup);
+
+                // Player Character
+                const playerGroup = new THREE.Group();
+                const playerMesh = new THREE.Mesh(
+                    new THREE.BoxGeometry(1.2, 1.6, 1.2),
+                    new THREE.MeshStandardMaterial({ color: 0x3388ff })
+                );
+                playerMesh.position.y = 0.8;
+                playerGroup.add(playerMesh);
+
+                const playerPointer = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.3, 0.3, 0.4),
+                    new THREE.MeshStandardMaterial({ color: 0xff3333 })
+                );
+                playerPointer.position.set(0, 1.2, -0.7);
+                playerGroup.add(playerPointer);
+
+                playerGroup.position.set(-35, 0, -25); // Spawn near shipwreck
+                scene.add(playerGroup);
+
+                let playerVY = 0;
+                let isGrounded = true;
+
+                // Resources & Creatures Arrays
+                const harvestables = [];
+                const creatures = [];
+                const tamedCompanions = [];
+                const projectiles = [];
+
+                // Resource Generators
+                function addResource(type, x, z) {
+                    const g = new THREE.Group();
+                    let dropType = 'wood';
+                    let hp = 3;
+
+                    if (type === 'oak') {
+                        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.4, 1.5), new THREE.MeshStandardMaterial({ color: 0x4a2e12 }));
+                        trunk.position.y = 0.75;
+                        const top = new THREE.Mesh(new THREE.DodecahedronGeometry(1.4), new THREE.MeshStandardMaterial({ color: 0x1e6b27 }));
+                        top.position.y = 2.2;
+                        g.add(trunk, top);
+                        dropType = 'wood';
+                    } else if (type === 'palm') {
+                        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.25, 2.2), new THREE.MeshStandardMaterial({ color: 0x8b6508 }));
+                        trunk.position.y = 1.1;
+                        const top = new THREE.Mesh(new THREE.ConeGeometry(1.6, 0.8, 5), new THREE.MeshStandardMaterial({ color: 0x22aa44 }));
+                        top.position.y = 2.2;
+                        g.add(trunk, top);
+                        dropType = 'wood';
+                    } else if (type === 'ore') {
+                        const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.9, 1), new THREE.MeshStandardMaterial({ color: 0x667788 }));
+                        rock.position.y = 0.5;
+                        g.add(rock);
+                        dropType = 'stone';
+                        hp = 4;
+                    } else if (type === 'bush') {
+                        const bush = new THREE.Mesh(new THREE.IcosahedronGeometry(0.7), new THREE.MeshStandardMaterial({ color: 0x33aa33 }));
+                        bush.position.y = 0.4;
+                        g.add(bush);
+                        dropType = 'berry';
+                        hp = 2;
+                    }
+
+                    g.position.set(x, 0, z);
+                    scene.add(g);
+                    harvestables.push({ mesh: g, type, dropType, hp, x, z, radius: 0.9 });
+                }
+
+                // Populate Map
+                for (let i = 0; i < 40; i++) {
+                    const rx = (Math.random() - 0.4) * (WORLD_SIZE - 20);
+                    const rz = (Math.random() - 0.5) * (WORLD_SIZE - 20);
+                    const types = ['oak', 'palm', 'ore', 'bush'];
+                    addResource(types[Math.floor(Math.random() * types.length)], rx, rz);
+                }
+
+                // Creature Generator (Phase 3)
+                function spawnCreature(x, z, disposition) {
+                    let color = 0x33cc33; // Docile
+                    if (disposition === 'wary') color = 0xeecc00;
+                    if (disposition === 'hostile') color = 0xee3333;
+
+                    const body = new THREE.Mesh(
+                        new THREE.SphereGeometry(0.7, 8, 8),
+                        new THREE.MeshStandardMaterial({ color })
+                    );
+                    body.position.set(x, 0.7, z);
+                    scene.add(body);
+
+                    creatures.push({
+                        mesh: body,
+                        disposition: disposition,
+                        hp: 30,
+                        maxHP: 30,
+                        x: x,
+                        z: z,
+                        isSubmissive: false,
+                        isTamed: false
+                    });
+                }
+
+                // Spawn 15 creatures
+                for (let i = 0; i < 15; i++) {
+                    const cx = (Math.random() - 0.5) * 80;
+                    const cz = (Math.random() - 0.5) * 80;
+                    const disp = i % 3 === 0 ? 'hostile' : (i % 2 === 0 ? 'wary' : 'docile');
+                    spawnCreature(cx, cz, disp);
+                }
+
+                // Actions: Tap/Hold Attack, Interact, Bow Shot, Jump
+                let attackTimer = 0;
+                const btnAttack = document.getElementById('btn-attack');
+
+                if (btnAttack) {
+                    btnAttack.addEventListener('pointerdown', (e) => {
+                        e.preventDefault();
+                        attackTimer = Date.now();
+                    });
+
+                    btnAttack.addEventListener('pointerup', (e) => {
+                        e.preventDefault();
+                        const duration = Date.now() - attackTimer;
+                        if (duration > 300) {
+                            // Power Attack
+                            if (consumeEnergy(25)) performAttack(2.5, 20);
+                        } else {
+                            // Basic Attack
+                            if (consumeEnergy(10)) performAttack(1.6, 10);
+                        }
+                    });
+                }
+
+                function performAttack(rangeBonus, damage) {
+                    // Attack resources & creatures
+                    creatures.forEach(c => {
+                        const dist = Math.hypot(playerGroup.position.x - c.x, playerGroup.position.z - c.z);
+                        if (dist < rangeBonus + 0.8) {
+                            c.hp -= damage;
+                            c.mesh.position.y = 0.4; // Knockback effect
+                            if (c.hp <= 3 && !c.isTamed) {
+                                c.isSubmissive = true;
+                                c.mesh.material.color.setHex(0x00ffff); // Submissive cyan highlight
+                            }
+                        }
+                    });
+
+                    for (let i = harvestables.length - 1; i >= 0; i--) {
+                        const h = harvestables[i];
+                        if (Math.hypot(playerGroup.position.x - h.x, playerGroup.position.z - h.z) < rangeBonus) {
+                            h.hp -= 1;
+                            if (h.hp <= 0) {
+                                inventory[h.dropType] = (inventory[h.dropType] || 0) + 2;
+                                updateInventoryUI();
+                                scene.remove(h.mesh);
+                                harvestables.splice(i, 1);
+                            }
+                        }
+                    }
+                }
+
+                // Interact Action (Pluck / Tame)
+                const btnInteract = document.getElementById('btn-interact');
+                if (btnInteract) {
+                    btnInteract.onclick = () => {
+                        creatures.forEach(c => {
+                            const dist = Math.hypot(playerGroup.position.x - c.x, playerGroup.position.z - c.z);
+                            if (dist < 2.5 && c.isSubmissive && !c.isTamed && tamedCompanions.length < 2) {
+                                c.isTamed = true;
+                                c.isSubmissive = false;
+                                c.mesh.material.color.setHex(0xaa00ff); // Purple tame color
+                                tamedCompanions.push(c);
+                            }
+                        });
+                    };
+                }
+
+                // Jump / Climb Button
+                const btnJump = document.getElementById('btn-jump');
+                if (btnJump) {
+                    btnJump.onclick = () => {
+                        if (isGrounded) {
+                            playerVY = 0.25;
+                            isGrounded = false;
+                        }
+                    };
+                }
+
+                // Ranged Bow Attack
+                const btnBow = document.getElementById('btn-bow');
+                if (btnBow) {
+                    btnBow.onclick = () => {
+                        if (consumeEnergy(12)) {
+                            const arrow = new THREE.Mesh(
+                                new THREE.BoxGeometry(0.1, 0.1, 0.8),
+                                new THREE.MeshBasicMaterial({ color: 0xffff00 })
+                            );
+                            arrow.position.copy(playerGroup.position);
+                            arrow.position.y += 1.0;
+                            arrow.rotation.y = playerGroup.rotation.y;
+                            scene.add(arrow);
+                            projectiles.push({ mesh: arrow, dirX: Math.sin(playerGroup.rotation.y), dirZ: Math.cos(playerGroup.rotation.y), life: 40 });
+                        }
+                    };
+                }
+
+                // Virtual Joystick
+                let joystickVector = { x: 0, y: 0 };
+                const baseEl = document.getElementById('joystick-base');
+                const knobEl = document.getElementById('joystick-knob');
+
+                function handleJoystick(e) {
+                    e.preventDefault();
+                    const rect = baseEl.getBoundingClientRect();
+                    const cx = rect.left + rect.width / 2;
+                    const cy = rect.top + rect.height / 2;
+                    const touch = e.touches ? e.touches[0] : e;
+
+                    let dx = touch.clientX - cx;
+                    let dy = touch.clientY - cy;
+                    const dist = Math.hypot(dx, dy);
+
+                    if (dist > 40) { dx = (dx / dist) * 40; dy = (dy / dist) * 40; }
+                    knobEl.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+                    joystickVector = dist < 5 ? { x: 0, y: 0 } : { x: dx / 40, y: dy / 40 };
+                }
+
+                function resetJoystick() {
+                    knobEl.style.transform = `translate(-50%, -50%)`;
+                    joystickVector = { x: 0, y: 0 };
+                }
+
+                baseEl.addEventListener('pointerdown', (e) => { baseEl.setPointerCapture(e.pointerId); handleJoystick(e); });
+                baseEl.addEventListener('pointermove', (e) => { if (baseEl.hasPointerCapture(e.pointerId)) handleJoystick(e); });
+                baseEl.addEventListener('pointerup', (e) => { baseEl.releasePointerCapture(e.pointerId); resetJoystick(); });
+
+                // Camera Toggle
+                let isAutoCam = false;
+                let cameraAngle = 0;
+                let camRotInput = 0;
+                const camModeBtn = document.getElementById('btn-cam-mode');
+                if (camModeBtn) {
+                    camModeBtn.onclick = () => {
+                        isAutoCam = !isAutoCam;
+                        camModeBtn.innerText = isAutoCam ? '🎥 AUTO' : '🔒 FREE';
+                    };
+                }
+
+                function bindCam(id, val) {
+                    const b = document.getElementById(id);
+                    if (!b) return;
+                    b.addEventListener('pointerdown', () => camRotInput = val);
+                    b.addEventListener('pointerup', () => camRotInput = 0);
+                }
+                bindCam('btn-cam-left', -1);
+                bindCam('btn-cam-right', 1);
+
+                // Menu UI Open / Close
+                const menuModal = document.getElementById('menu-modal');
+                document.getElementById('btn-menu-open').onclick = () => { updateInventoryUI(); menuModal.style.display = 'flex'; };
+                document.getElementById('btn-menu-close').onclick = () => { menuModal.style.display = 'none'; };
+
+                // Game Loop
+                const clock = new THREE.Clock();
+                let dayTime = 0;
+
+                function animate() {
+                    requestAnimationFrame(animate);
+
+                    const delta = clock.getDelta();
+                    dayTime += delta * 0.05; // Day-night cycle progression
+
+                    // Rotate Sun Light
+                    sunLight.position.x = Math.cos(dayTime) * 60;
+                    sunLight.position.y = Math.sin(dayTime) * 60;
+
+                    // Energy Regeneration
+                    if (currentEnergy < maxEnergy) {
+                        currentEnergy = Math.min(maxEnergy, currentEnergy + 10 * delta);
+                        updateDisplays();
+                    }
+
+                    // Player Jump Physics
+                    playerGroup.position.y += playerVY;
+                    if (!isGrounded) {
+                        playerVY -= 0.8 * delta; // Gravity
+                        if (playerGroup.position.y <= 0) {
+                            playerGroup.position.y = 0;
+                            playerVY = 0;
+                            isGrounded = true;
+                        }
+                    }
+
+                    // Joystick Movement
+                    if (camRotInput !== 0) cameraAngle += camRotInput * 2.0 * delta;
+
+                    const jx = joystickVector.x;
+                    const jy = joystickVector.y;
+
+                    if (Math.abs(jx) > 0.05 || Math.abs(jy) > 0.05) {
+                        const moveSpeed = playerGroup.position.x < -40 ? 4 : 8; // Swimming slow down
+                        const dx = (jx * Math.cos(cameraAngle) + jy * Math.sin(cameraAngle)) * moveSpeed * delta;
+                        const dz = (-jx * Math.sin(cameraAngle) + jy * Math.cos(cameraAngle)) * moveSpeed * delta;
+
+                        playerGroup.position.x += dx;
+                        playerGroup.position.z += dz;
+                        playerGroup.rotation.y = Math.atan2(dx, dz);
+                    }
+
+                    // Companions AI Follow
+                    tamedCompanions.forEach((comp, idx) => {
+                        const targetX = playerGroup.position.x + Math.sin(idx * 2) * 2;
+                        const targetZ = playerGroup.position.z + Math.cos(idx * 2) * 2;
+                        comp.x += (targetX - comp.x) * 0.05;
+                        comp.z += (targetZ - comp.z) * 0.05;
+                        comp.mesh.position.set(comp.x, 0.7, comp.z);
+                    });
+
+                    // Projectiles Flight
+                    for (let i = projectiles.length - 1; i >= 0; i--) {
+                        const p = projectiles[i];
+                        p.mesh.position.x += p.dirX * 20 * delta;
+                        p.mesh.position.z += p.dirZ * 20 * delta;
+                        p.life--;
+                        if (p.life <= 0) {
+                            scene.remove(p.mesh);
+                            projectiles.splice(i, 1);
+                        }
+                    }
+
+                    // Camera Orbit Update
+                    camera.position.x = playerGroup.position.x + Math.sin(cameraAngle) * 14;
+                    camera.position.z = playerGroup.position.z + Math.cos(cameraAngle) * 14;
+                    camera.position.y = playerGroup.position.y + 10;
+                    camera.lookAt(playerGroup.position.x, playerGroup.position.y + 0.6, playerGroup.position.z);
+
+                    renderer.render(scene, camera);
+                }
+
+                animate();
+
+                window.addEventListener('resize', () => {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                });
+
+            } catch (err) {
+                showMobileError(err.message);
+            }
+        });
     </script>
 </body>
 </html>
