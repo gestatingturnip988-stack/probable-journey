@@ -568,7 +568,7 @@ function initGameEngine() {
         return true;
     }
 
-    // =========================================================================
+// =========================================================================
     // [SECTION 10: MAIN ANIMATION & GAME LOOP]
     // =========================================================================
     const clock = new THREE.Clock();
@@ -582,6 +582,10 @@ function initGameEngine() {
 
         if (Math.abs(jx) > 0.05 || Math.abs(jy) > 0.05) {
             const moveSpeed = 7.5;
+
+            // Movement is ALWAYS calculated relative to the current camera angle.
+            // This guarantees that pushing "Up" on the joystick always moves the 
+            // character toward the top of your screen, regardless of where they are facing.
             const dx = (jx * Math.cos(cameraAngle) + jy * Math.sin(cameraAngle)) * moveSpeed * delta;
             const dz = (-jx * Math.sin(cameraAngle) + jy * Math.cos(cameraAngle)) * moveSpeed * delta;
 
@@ -591,6 +595,7 @@ function initGameEngine() {
             if (canMoveTo(nextX, playerGroup.position.z)) playerGroup.position.x = nextX;
             if (canMoveTo(playerGroup.position.x, nextZ)) playerGroup.position.z = nextZ;
 
+            // Character smoothly turns to face the direction they are actually moving
             playerGroup.rotation.y = Math.atan2(dx, dz);
         }
 
@@ -605,11 +610,6 @@ function initGameEngine() {
                 playerVY = 0;
                 isGrounded = true;
             }
-        }
-
-        // Lock camera angle instantly to player angle when LOCKED (eliminates lag discordance)
-        if (isCameraLocked) {
-            cameraAngle = playerGroup.rotation.y;
         }
 
         creatures.forEach(c => c.update(delta, playerGroup.position));
@@ -671,12 +671,13 @@ function initGameEngine() {
             targetOverlay.style.display = 'none';
         }
 
-        // Dynamic distance scaling based on Aspect Ratio
         const aspect = window.innerWidth / window.innerHeight;
-        const camDistance = aspect > 1.0 ? 5.5 : 7.0; // Pull camera in closer during Landscape mode
+        const camDistance = aspect > 1.0 ? 5.5 : 7.0; 
         const camHeight = aspect > 1.0 ? 2.8 : 3.5;
 
-        // Instant direct camera positioning
+        // Position camera behind player based on cameraAngle
+        // If LOCKED: cameraAngle never changes.
+        // If FREE: cameraAngle changes only when the user swipes the screen.
         camera.position.x = playerGroup.position.x + Math.sin(cameraAngle) * camDistance;
         camera.position.z = playerGroup.position.z + Math.cos(cameraAngle) * camDistance;
         camera.position.y = playerGroup.position.y + camHeight;
@@ -692,4 +693,4 @@ function initGameEngine() {
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
     });
-        }
+}
