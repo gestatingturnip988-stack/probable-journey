@@ -671,25 +671,25 @@ function initGameEngine() {
             targetOverlay.style.display = 'none';
         }
 
-        // Dynamic distance scaling based on Aspect Ratio
-        const aspect = window.innerWidth / window.innerHeight;
-        const camDistance = aspect > 1.0 ? 5.5 : 7.0; // Pull camera in closer during Landscape mode
-        const camHeight = aspect > 1.0 ? 2.8 : 3.5;
+    // Dynamic distance scaling based on Aspect Ratio
+    const aspect = window.innerWidth / window.innerHeight;
+    const camDistance = aspect > 1.0 ? 5.5 : 7.0; 
+    const camHeight = aspect > 1.0 ? 2.8 : 3.5;
 
-        // Instant direct camera positioning
-        camera.position.x = playerGroup.position.x + Math.sin(cameraAngle) * camDistance;
-        camera.position.z = playerGroup.position.z + Math.cos(cameraAngle) * camDistance;
-        camera.position.y = playerGroup.position.y + camHeight;
-        camera.lookAt(playerGroup.position.x, playerGroup.position.y + 1.2, playerGroup.position.z);
+    // Instant direct camera positioning
+    camera.position.x = playerGroup.position.x + Math.sin(cameraAngle) * camDistance;
+    camera.position.z = playerGroup.position.z + Math.cos(cameraAngle) * camDistance;
+    camera.position.y = playerGroup.position.y + camHeight;
+    camera.lookAt(playerGroup.position.x, playerGroup.position.y + 1.2, playerGroup.position.z);
 
-        renderer.render(scene, camera);
-    }
+    renderer.render(scene, camera);
+}
 
-    animate();
+animate();
 
-    window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-        }
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+}
