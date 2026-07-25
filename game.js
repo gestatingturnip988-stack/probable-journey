@@ -582,8 +582,12 @@ function initGameEngine() {
 
         if (Math.abs(jx) > 0.05 || Math.abs(jy) > 0.05) {
             const moveSpeed = 7.5;
-            const dx = (jx * Math.cos(cameraAngle) + jy * Math.sin(cameraAngle)) * moveSpeed * delta;
-            const dz = (-jx * Math.sin(cameraAngle) + jy * Math.cos(cameraAngle)) * moveSpeed * delta;
+
+            // Decouple movement angle calculation from spinning locked camera loop
+            const moveAngle = cameraAngle;
+            
+            const dx = (jx * Math.cos(moveAngle) + jy * Math.sin(moveAngle)) * moveSpeed * delta;
+            const dz = (-jx * Math.sin(moveAngle) + jy * Math.cos(moveAngle)) * moveSpeed * delta;
 
             const nextX = playerGroup.position.x + dx;
             const nextZ = playerGroup.position.z + dz;
@@ -591,7 +595,18 @@ function initGameEngine() {
             if (canMoveTo(nextX, playerGroup.position.z)) playerGroup.position.x = nextX;
             if (canMoveTo(playerGroup.position.x, nextZ)) playerGroup.position.z = nextZ;
 
-            playerGroup.rotation.y = Math.atan2(dx, dz);
+            // Rotate character toward movement vector
+            const targetRotation = Math.atan2(dx, dz);
+            
+            if (isCameraLocked) {
+                // Instantly align player facing direction
+                playerGroup.rotation.y = targetRotation;
+                // Sync camera view angle to match player facing direction
+                cameraAngle = targetRotation;
+            } else {
+                // Free-cam: player turns to move, camera angle stays put
+                playerGroup.rotation.y = targetRotation;
+            }
         }
 
         const groundY = getTerrainHeight(playerGroup.position.x, playerGroup.position.z);
@@ -605,11 +620,6 @@ function initGameEngine() {
                 playerVY = 0;
                 isGrounded = true;
             }
-        }
-
-        // Lock camera angle instantly to player angle when LOCKED (eliminates lag discordance)
-        if (isCameraLocked) {
-            cameraAngle = playerGroup.rotation.y;
         }
 
         creatures.forEach(c => c.update(delta, playerGroup.position));
@@ -673,10 +683,10 @@ function initGameEngine() {
 
         // Dynamic distance scaling based on Aspect Ratio
         const aspect = window.innerWidth / window.innerHeight;
-        const camDistance = aspect > 1.0 ? 5.5 : 7.0; // Pull camera in closer during Landscape mode
+        const camDistance = aspect > 1.0 ? 5.5 : 7.0; 
         const camHeight = aspect > 1.0 ? 2.8 : 3.5;
 
-        // Instant direct camera positioning
+        // Position camera behind player based on cameraAngle
         camera.position.x = playerGroup.position.x + Math.sin(cameraAngle) * camDistance;
         camera.position.z = playerGroup.position.z + Math.cos(cameraAngle) * camDistance;
         camera.position.y = playerGroup.position.y + camHeight;
@@ -687,9 +697,10 @@ function initGameEngine() {
 
     animate();
 
+    // Responsive Canvas Resize Listener
     window.addEventListener('resize', () => {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
     });
-        }
+}
