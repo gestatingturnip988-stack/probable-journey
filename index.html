@@ -203,6 +203,215 @@
 
             <div class="p-3 bg-slate-950/80 border border-slate-800 rounded-xl min-h-[50px] flex items-center">
                 <p id="class-desc" class="text-[11px] text-slate-300 leading-snug">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>3D Console RPG - Beach Landing Prototype</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        /* Essential base overrides for mobile WebGL touch handling */
+        html, body {
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+            overflow: hidden;
+            background-color: #020617;
+        }
+        /* Custom UI touch utility to guarantee crisp mobile response */
+        .touch-action-manipulation {
+            touch-action: manipulation;
+        }
+    </style>
+</head>
+<body class="w-screen h-screen relative font-sans text-slate-100 antialiased select-none">
+
+    <div id="mobile-log" class="fixed top-2 left-2 z-50 bg-slate-950/90 text-red-400 font-mono text-[10px] p-2 rounded-lg border border-red-500/30 hidden max-h-32 max-w-[80vw] overflow-y-auto pointer-events-auto"></div>
+
+    <div id="canvas-container" class="absolute inset-0 z-0 pointer-events-none w-full h-full"></div>
+
+    <div id="target-info-overlay" class="fixed top-4 left-1/2 -translate-x-1/2 z-10 hidden bg-slate-900/85 backdrop-blur-md border border-amber-500/40 rounded-xl px-4 py-2 shadow-lg text-center min-w-[160px]">
+        <div class="text-xs font-bold text-amber-400 tracking-wide" id="target-name-lbl">Creature Name</div>
+        <div class="text-[10px] text-slate-300" id="target-status-lbl">Condition: Healthy</div>
+    </div>
+
+    <div class="fixed top-4 right-4 z-20">
+        <button id="btn-menu-open" class="w-12 h-12 bg-slate-900/80 backdrop-blur-md border border-slate-700/80 rounded-2xl flex items-center justify-center text-xl shadow-lg active:scale-90 transition touch-action-manipulation pointer-events-auto">
+            🎒
+        </button>
+    </div>
+
+    <div id="hud-bottom-left" class="fixed bottom-4 left-4 z-10 flex gap-3 items-end pointer-events-none">
+        <div id="minimap-box" class="w-16 h-16 bg-slate-900/80 backdrop-blur-md border border-slate-700/80 rounded-2xl flex items-center justify-center text-[10px] font-bold text-slate-400 shadow-lg">
+            MAP
+        </div>
+        <div id="status-bars" class="w-36 space-y-1 bg-slate-900/80 backdrop-blur-md p-2 rounded-2xl border border-slate-800 shadow-lg">
+            <div class="relative w-full h-3 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+                <div class="h-full bg-indigo-500 w-full"></div>
+                <span class="absolute inset-0 flex items-center justify-center text-[8px] font-extrabold tracking-wider text-white drop-shadow">EXP Lv.1</span>
+            </div>
+            <div class="relative w-full h-3 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+                <div class="h-full bg-rose-500 transition-all duration-200" id="bar-hp" style="width: 100%;"></div>
+                <span class="absolute inset-0 flex items-center justify-center text-[8px] font-extrabold tracking-wider text-white drop-shadow">HEALTH</span>
+            </div>
+            <div class="relative w-full h-3 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+                <div class="h-full bg-amber-500 transition-all duration-200" id="bar-energy" style="width: 100%;"></div>
+                <span class="absolute inset-0 flex items-center justify-center text-[8px] font-extrabold tracking-wider text-white drop-shadow">ENERGY</span>
+            </div>
+            <div class="relative w-full h-3 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+                <div class="h-full bg-purple-500 transition-all duration-200" id="bar-mana" style="width: 100%;"></div>
+                <span class="absolute inset-0 flex items-center justify-center text-[8px] font-extrabold tracking-wider text-white drop-shadow">MANA (MP)</span>
+            </div>
+            <div class="relative w-full h-3 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+                <div class="h-full bg-emerald-500 w-3/4"></div>
+                <span class="absolute inset-0 flex items-center justify-center text-[8px] font-extrabold tracking-wider text-white drop-shadow">HUNGER</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="hotbar" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-10 flex gap-1.5 bg-slate-900/80 backdrop-blur-md p-1.5 rounded-2xl border border-slate-800 shadow-xl pointer-events-auto">
+        <div class="relative w-10 h-10 bg-slate-800/80 border border-slate-700/60 rounded-xl flex items-center justify-center text-lg">
+            <span>🪓</span><span class="absolute bottom-0.5 right-1 text-[9px] font-black text-amber-400" id="count-hatchet">0</span>
+        </div>
+        <div class="relative w-10 h-10 bg-slate-800/80 border border-slate-700/60 rounded-xl flex items-center justify-center text-lg">
+            <span>🔪</span><span class="absolute bottom-0.5 right-1 text-[9px] font-black text-amber-400" id="count-knife">0</span>
+        </div>
+        <div class="relative w-10 h-10 bg-slate-800/80 border border-slate-700/60 rounded-xl flex items-center justify-center text-lg">
+            <span>🏹</span><span class="absolute bottom-0.5 right-1 text-[9px] font-black text-amber-400" id="count-arrows">20</span>
+        </div>
+        <div class="relative w-10 h-10 bg-slate-800/80 border border-slate-700/60 rounded-xl flex items-center justify-center text-lg">
+            <span>🪵</span><span class="absolute bottom-0.5 right-1 text-[9px] font-black text-amber-400" id="count-wood">0</span>
+        </div>
+        <div class="relative w-10 h-10 bg-slate-800/80 border border-slate-700/60 rounded-xl flex items-center justify-center text-lg">
+            <span>🪨</span><span class="absolute bottom-0.5 right-1 text-[9px] font-black text-amber-400" id="count-stone">0</span>
+        </div>
+    </div>
+
+    <div class="controls-right fixed bottom-4 right-4 z-20 flex flex-col items-end gap-3 pointer-events-none">
+        <div class="camera-utility-row flex gap-2 pointer-events-auto"> 
+        </div>
+
+        <div class="radial-action-arc grid grid-cols-2 gap-2 pointer-events-auto w-44">
+            <button id="btn-attack" class="py-2 px-1 bg-rose-600/90 border border-rose-500/50 rounded-xl text-[10px] font-black tracking-wider text-white shadow-lg active:scale-90 transition touch-action-manipulation">ATTACK ⚔️</button>
+            <button id="btn-skill" class="py-2 px-1 bg-indigo-600/90 border border-indigo-500/50 rounded-xl text-[10px] font-black tracking-wider text-white shadow-lg active:scale-90 transition touch-action-manipulation">SKILL ✨</button>
+            <button id="btn-interact" class="py-2 px-1 bg-amber-600/90 border border-amber-500/50 rounded-xl text-[10px] font-black tracking-wider text-white shadow-lg active:scale-90 transition touch-action-manipulation">INTERACT 🤝</button>
+            <button id="btn-jump" class="py-2 px-1 bg-emerald-600/90 border border-emerald-500/50 rounded-xl text-[10px] font-black tracking-wider text-white shadow-lg active:scale-90 transition touch-action-manipulation">JUMP 🦘</button>
+        </div>
+
+        <div id="joystick-base" class="relative w-28 h-28 bg-slate-950/60 backdrop-blur-sm border-2 border-slate-700/50 rounded-full flex items-center justify-center shadow-inner pointer-events-auto touch-action-manipulation">
+            <div id="joystick-knob" class="absolute w-12 h-12 bg-amber-500/80 border border-amber-300/80 rounded-full shadow-lg pointer-events-none transition-transform duration-75"></div>
+        </div>
+    </div>
+
+    <div id="menu-modal" class="fixed inset-0 z-40 hidden items-center justify-center bg-slate-950/80 backdrop-blur-md p-4 pointer-events-auto">
+        <div class="w-full max-w-xl bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-2xl flex flex-col max-h-[90vh]">
+            <div class="menu-header flex justify-between items-center pb-4 border-b border-slate-800">
+                <h2 class="text-base font-black text-amber-400 tracking-wider">CHARACTER & INVENTORY</h2>
+                <button id="btn-menu-close" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold border border-slate-700 active:scale-95 transition touch-action-manipulation">✕ CLOSE</button>
+            </div>
+            <div class="menu-body grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 overflow-y-auto">
+                <div class="equipment-panel bg-slate-950/60 p-4 rounded-2xl border border-slate-800/80 flex flex-col items-center justify-center">
+                    <div class="paperdoll-container flex items-center justify-center gap-4">
+                        <div class="equip-column flex flex-col gap-2">
+                            <div class="equip-slot w-12 h-12 bg-slate-900 border border-slate-800 rounded-xl flex flex-col items-center justify-center relative">
+                                <span class="slot-label text-[8px] text-slate-500 font-bold uppercase absolute top-1">MAIN</span>
+                                <span id="equip-weapon-icon" class="text-lg mt-2">👊</span>
+                            </div>
+                            <div class="equip-slot w-12 h-12 bg-slate-900 border border-slate-800 rounded-xl flex flex-col items-center justify-center relative">
+                                <span class="slot-label text-[8px] text-slate-500 font-bold uppercase absolute top-1">HEAD</span>
+                            </div>
+                            <div class="equip-slot w-12 h-12 bg-slate-900 border border-slate-800 rounded-xl flex flex-col items-center justify-center relative">
+                                <span class="slot-label text-[8px] text-slate-500 font-bold uppercase absolute top-1">CHEST</span>
+                            </div>
+                        </div>
+                        
+                        <div class="character-avatar-box flex flex-col items-center justify-center p-3 bg-slate-900/80 border border-slate-800 rounded-2xl text-center min-w-[100px]">
+                            <div class="text-4xl mb-1">🧍</div>
+                            <b id="ui-char-class" class="text-xs text-amber-400 tracking-wide">BRAWLER</b>
+                            <span id="ui-char-gender" class="text-[9px] text-slate-400">Male Adventurer</span>
+                        </div>
+
+                        <div class="equip-column flex flex-col gap-2">
+                            <div class="equip-slot w-12 h-12 bg-slate-900 border border-slate-800 rounded-xl flex flex-col items-center justify-center relative">
+                                <span class="slot-label text-[8px] text-slate-500 font-bold uppercase absolute top-1">OFF</span>
+                            </div>
+                            <div class="equip-slot w-12 h-12 bg-slate-900 border border-slate-800 rounded-xl flex flex-col items-center justify-center relative">
+                                <span class="slot-label text-[8px] text-slate-500 font-bold uppercase absolute top-1">LEGS</span>
+                            </div>
+                            <div class="equip-slot w-12 h-12 bg-slate-900 border border-slate-800 rounded-xl flex flex-col items-center justify-center relative">
+                                <span class="slot-label text-[8px] text-slate-500 font-bold uppercase absolute top-1">FEET</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="inventory-panel flex flex-col">
+                    <div class="tab-bar flex gap-1 mb-3 bg-slate-950 p-1 rounded-xl border border-slate-800">
+                        <button class="tab-btn flex-1 py-1.5 text-[10px] font-extrabold rounded-lg bg-amber-500 text-slate-950 transition touch-action-manipulation" id="tab-btn-inv">🎒 Inventory</button>
+                        <button class="tab-btn flex-1 py-1.5 text-[10px] font-extrabold rounded-lg bg-slate-800 text-slate-400 transition touch-action-manipulation" id="tab-btn-craft">🔨 Crafting</button>
+                        <button class="tab-btn flex-1 py-1.5 text-[10px] font-extrabold rounded-lg bg-slate-800 text-slate-400 transition touch-action-manipulation" id="tab-btn-skills">⚡ Spells</button>
+                    </div>
+
+                    <div class="tab-content" id="tab-inv">
+                        <div class="inv-grid-large grid grid-cols-4 gap-2 bg-slate-950/60 p-3 rounded-2xl border border-slate-800/80 min-h-[140px]" id="inventory-grid"></div>
+                    </div>
+
+                    <div class="tab-content hidden" id="tab-craft">
+                        <div class="craft-recipe bg-slate-950/60 p-3 rounded-2xl border border-slate-800/80 flex items-center justify-between">
+                            <div class="craft-recipe-info text-xs">
+                                <b class="text-amber-400">🧱 Wooden Wall</b>
+                                <div class="text-[10px] text-slate-400">Requires: 2 Wood</div>
+                            </div>
+                            <button class="craft-btn px-4 py-2 bg-emerald-600 active:scale-95 text-white font-black text-xs rounded-xl shadow transition touch-action-manipulation" id="btn-craft-wall" onclick="craftItem('wall')">CRAFT</button>
+                        </div>
+                    </div>
+
+                    <div class="tab-content hidden text-slate-500 text-[10px] p-4 text-center" id="tab-skills">
+                        No active spells unlocked.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="title-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-950/90 backdrop-blur-md p-6 pointer-events-auto">
+        <div class="text-center max-w-sm space-y-4">
+            <h1 class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-emerald-400 to-teal-300 tracking-wider">
+                UNEXPLORED ISLE
+            </h1>
+            <p class="text-xs text-slate-400">Survival & Adventure Awaits</p>
+            <button id="btn-show-creation" class="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-600 active:scale-95 text-slate-950 font-black rounded-2xl shadow-lg shadow-emerald-950/50 transition-all touch-action-manipulation">
+                CREATE CHARACTER
+            </button>
+            <span class="game-version" style="position: absolute; bottom: 12px; right: 16px; color: #aaaaaa; font-family: monospace; font-size: 12px;">v0.0.5</span>
+        </div>
+    </div>
+
+    <div id="creation-screen" class="fixed inset-0 z-50 hidden flex-col items-center justify-center bg-slate-950/95 backdrop-blur-md p-6 pointer-events-auto">
+        <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl text-slate-100 space-y-5">
+            <h2 class="text-xl font-black text-center text-amber-400 tracking-wider">CREATE YOUR HERO</h2>
+            
+            <div class="space-y-2">
+                <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Select Gender</span>
+                <div class="grid grid-cols-2 gap-3">
+                    <button id="btn-g-m" class="py-3 bg-amber-500 text-slate-950 border border-amber-400 rounded-xl text-xs font-black transition touch-action-manipulation">Male</button>
+                    <button id="btn-g-f" class="py-3 bg-slate-800 text-slate-300 border border-slate-700 rounded-xl text-xs font-black transition touch-action-manipulation">Female</button>
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Select Class</span>
+                <div class="grid grid-cols-3 gap-2">
+                    <button id="btn-c-brawler" class="py-3 bg-amber-500 text-slate-950 border border-amber-400 rounded-xl text-[10px] font-black transition touch-action-manipulation">Brawler</button>
+                    <button id="btn-c-hunter" class="py-3 bg-slate-800 text-slate-300 border border-slate-700 rounded-xl text-[10px] font-black transition touch-action-manipulation">Hunter</button>
+                    <button id="btn-c-mage" class="py-3 bg-slate-800 text-slate-300 border border-slate-700 rounded-xl text-[10px] font-black transition touch-action-manipulation">Mage</button>
+                </div>
+            </div>
+
+            <div class="p-3 bg-slate-950/80 border border-slate-800 rounded-xl min-h-[50px] flex items-center">
+                <p id="class-desc" class="text-[11px] text-slate-300 leading-snug">
                     Brawlers focus on raw power and close-range striking force.
                 </p>
             </div>
