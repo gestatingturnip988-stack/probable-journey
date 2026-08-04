@@ -1,7 +1,7 @@
 // =========================================================================
 // [SECTION 0: ERROR HANDLING, LOGGING & DOM BINDINGS]
 // =========================================================================
-const GAME_VERSION = "v0.0.3";
+const GAME_VERSION = "v0.0.5";
 
 function showMobileError(msg) {
     const logEl = document.getElementById('mobile-log');
