@@ -484,100 +484,224 @@ function initGameEngine() {
     harvestables.push(boar, stag);
     obstacleColliders.push(boar, stag);
 
+// =========================================================================
+    // [SECTION 10: MAIN ANIMATION & GAME LOOP]
     // =========================================================================
-    // [SECTION 7: COMBAT, SKILLS & INTERACTION]
-    // =========================================================================
-    const attackBtn = document.getElementById('btn-attack');
-    const skillBtn = document.getElementById('btn-skill');
+    // Re-use clock variable if already declared, otherwise initialize
+    if (typeof clock === 'undefined') {
+        var clock = new THREE.Clock();
+    }
 
-    function performPrimaryAttack() {
-        if (playerClass === 'BRAWLER') {
-            for (let h of harvestables) {
-                if (Math.hypot(playerGroup.position.x - h.x, playerGroup.position.z - h.z) < 2.2) {
-                    if (h.isCreature) {
-                        h.takeDamage(8);
-                    } else if (!h.isChest) {
-                        h.hp--;
-                        if (h.hp <= 0) {
-                            inventory[h.dropType] += 3;
-                            updateUI();
-                            removeHarvestable(h);
+    function animate() {
+        requestAnimationFrame(animate);
+        const delta = clock.getDelta();
+
+        // --- ATTACK TIMING & DAMAGE TIME-LAPSE ---
+        if (isAttacking) {
+            attackTimer += delta;
+
+            if (activeSlashMesh) {
+                activeSlashMesh.rotation.z += 10.0 * delta;
+            }
+
+            if (attackTimer >= 0.2 && !attackDamageDealt) {
+                attackDamageDealt = true;
+
+                if (playerClass === 'BRAWLER') {
+                    for (let h of harvestables) {
+                        if (Math.hypot(playerGroup.position.x - h.x, playerGroup.position.z - h.z) < 2.5) {
+                            if (h.isCreature) {
+                                h.takeDamage(12);
+                            } else if (!h.isChest) {
+                                h.hp--;
+                                if (h.hp <= 0) {
+                                    inventory[h.dropType] += 3;
+                                    updateUI();
+                                    removeHarvestable(h);
+                                }
+                            }
+                            break;
                         }
                     }
+                }
+            }
+
+            if (attackTimer >= ATTACK_DURATION) {
+                isAttacking = false;
+                if (activeSlashMesh) {
+                    scene.remove(activeSlashMesh);
+                    activeSlashMesh = null;
+                }
+            }
+        }
+
+        // --- CAMERA JOYSTICK ---
+        if (Math.abs(camJoystickVector.x) > 0.05) {
+            cameraAngle -= camJoystickVector.x * 2.5 * delta;
+            timeSinceLastManualCam = 0;
+        }
+
+        if (Math.abs(camJoystickVector.y) > 0.05) {
+            cameraPitch -= camJoystickVector.y * 3.5 * delta;
+            cameraPitch = Math.max(-0.2, Math.min(1.4, cameraPitch));
+            timeSinceLastManualCam = 0;
+        }
+
+        const jx = joystickVector.x;
+        const jy = joystickVector.y;
+
+        if (!isSwipingCamera) {
+            timeSinceLastManualCam += delta;
+        }
+
+        let isMovingForward = jy < -0.3;
+        if (isMovingForward) {
+            continuousMoveTime += delta;
+        } else {
+            continuousMoveTime = 0; 
+        }
+
+        if (Math.abs(jx) > 0.05 || Math.abs(jy) > 0.05) {
+            const moveSpeed = 7.5;
+
+            const dx = (jx * Math.cos(cameraAngle) + jy * Math.sin(cameraAngle)) * moveSpeed * delta;
+            const dz = (-jx * Math.sin(cameraAngle) + jy * Math.cos(cameraAngle)) * moveSpeed * delta;
+
+            const nextX = playerGroup.position.x + dx;
+            const nextZ = playerGroup.position.z + dz;
+
+            if (canMoveTo(nextX, playerGroup.position.z)) playerGroup.position.x = nextX;
+            if (canMoveTo(playerGroup.position.x, nextZ)) playerGroup.position.z = nextZ;
+
+            playerGroup.rotation.y = Math.atan2(dx, dz);
+        }
+
+        for (let obs of obstacleColliders) {
+            const dist = Math.hypot(playerGroup.position.x - obs.x, playerGroup.position.z - obs.z);
+            const minDist = PLAYER_RADIUS + obs.radius;
+            
+            if (dist < minDist && dist > 0.001) {
+                const overlap = minDist - dist;
+                const pushX = (playerGroup.position.x - obs.x) / dist;
+                const pushZ = (playerGroup.position.z - obs.z) / dist;
+                
+                playerGroup.position.x += pushX * overlap;
+                playerGroup.position.z += pushZ * overlap;
+            }
+        }
+
+        if (timeSinceLastManualCam > 1.5 && continuousMoveTime > 0.5) {
+            let targetAngle = playerGroup.rotation.y - Math.PI;
+            let diffAngle = targetAngle - cameraAngle;
+            diffAngle = Math.atan2(Math.sin(diffAngle), Math.cos(diffAngle));
+            
+            const glideSpeed = 2.5; 
+            cameraAngle += diffAngle * glideSpeed * delta;
+
+            const DEFAULT_PITCH = 0.4;
+            let diffPitch = DEFAULT_PITCH - cameraPitch;
+            cameraPitch += diffPitch * glideSpeed * delta;
+        }
+
+        const groundY = getTerrainHeight(playerGroup.position.x, playerGroup.position.z);
+        if (isGrounded) {
+            playerGroup.position.y = groundY;
+        } else {
+            playerGroup.position.y += playerVY;
+            playerVY -= 0.8 * delta;
+            if (playerGroup.position.y <= groundY) {
+                playerGroup.position.y = groundY;
+                playerVY = 0;
+                isGrounded = true;
+            }
+        }
+
+        creatures.forEach(c => c.update(delta, playerGroup.position));
+
+        for (let i = projectiles.length - 1; i >= 0; i--) {
+            const p = projectiles[i];
+            p.life -= delta;
+            p.mesh.position.x += p.dirX * p.speed * delta;
+            p.mesh.position.z += p.dirZ * p.speed * delta;
+
+            for (let c of creatures) {
+                if (c.hp > 0 && Math.hypot(p.mesh.position.x - c.x, p.mesh.position.z - c.z) < 1.2) {
+                    c.takeDamage(p.damage);
+                    p.life = 0;
                     break;
                 }
             }
-        } else if (playerClass === 'HUNTER' || playerClass === 'MAGE') {
-            const pGeo = (playerClass === 'MAGE') ? new THREE.SphereGeometry(0.3) : new THREE.CylinderGeometry(0.05, 0.05, 0.8);
-            const pMat = new THREE.MeshBasicMaterial({ color: (playerClass === 'MAGE') ? 0x00ffff : 0xffaa00 });
-            const proj = new THREE.Mesh(pGeo, pMat);
-            proj.position.copy(playerGroup.position);
-            proj.position.y += 1.2;
-            proj.rotation.y = playerGroup.rotation.y;
-            scene.add(proj);
-            
-            projectiles.push({
-                mesh: proj,
-                dirX: Math.sin(playerGroup.rotation.y),
-                dirZ: Math.cos(playerGroup.rotation.y),
-                speed: 18.0,
-                life: 1.5,
-                damage: 6
-            });
-        }
-    }
 
-    function performClassSkill() {
-        if (playerClass === 'HUNTER') {
-            const trapMesh = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.6, 0.6, 0.1),
-                new THREE.MeshStandardMaterial({ color: 0x333333 })
-            );
-            trapMesh.position.set(playerGroup.position.x, getTerrainHeight(playerGroup.position.x, playerGroup.position.z) + 0.05, playerGroup.position.z);
-            scene.add(trapMesh);
-            traps.push({ mesh: trapMesh, x: playerGroup.position.x, z: playerGroup.position.z });
-        } else if (playerClass === 'MAGE') {
-            const blast = new THREE.Mesh(
-                new THREE.RingGeometry(0.5, 3.5, 16),
-                new THREE.MeshBasicMaterial({ color: 0xff00ff, side: THREE.DoubleSide })
-            );
-            blast.rotation.x = -Math.PI / 2;
-            blast.position.set(playerGroup.position.x, getTerrainHeight(playerGroup.position.x, playerGroup.position.z) + 0.1, playerGroup.position.z);
-            scene.add(blast);
-            
-            setTimeout(() => scene.remove(blast), 400);
-            creatures.forEach(c => {
-                if (Math.hypot(playerGroup.position.x - c.x, playerGroup.position.z - c.z) < 3.8) {
-                    c.takeDamage(12);
-                }
-            });
-        }
-    }
-
-    if (attackBtn) attackBtn.onclick = performPrimaryAttack;
-    if (skillBtn) skillBtn.onclick = performClassSkill;
-
-    const interactBtn = document.getElementById('btn-interact');
-    if (interactBtn) {
-        interactBtn.onclick = () => {
-            if (!chestLooted && Math.hypot(playerGroup.position.x - chestData.x, playerGroup.position.z - chestData.z) < 2.5) {
-                chestLooted = true;
-                inventory.hatchet += 1;
-                inventory.knife += 1;
-                updateUI();
-                removeHarvestable(chestData);
+            if (p.life <= 0) {
+                scene.remove(p.mesh);
+                projectiles.splice(i, 1);
             }
-        };
+        }
+
+        for (let i = traps.length - 1; i >= 0; i--) {
+            const t = traps[i];
+            for (let c of creatures) {
+                if (c.hp > 0 && Math.hypot(t.x - c.x, t.z - c.z) < 1.0) {
+                    c.rootedTimer = 4.0;
+                    c.takeDamage(5);
+                    scene.remove(t.mesh);
+                    traps.splice(i, 1);
+                    break;
+                }
+            }
+        }
+
+        let closest = null;
+        let minDist = 3.5;
+        harvestables.forEach(h => {
+            const d = Math.hypot(playerGroup.position.x - h.x, playerGroup.position.z - h.z);
+            if (d < minDist) { minDist = d; closest = h; }
+        });
+
+        const targetOverlay = document.getElementById('target-info-overlay');
+        if (closest) {
+            targetRing.position.set(closest.x, getTerrainHeight(closest.x, closest.z) + 0.1, closest.z);
+            targetRing.visible = true;
+
+            if (closest.isCreature) {
+                if (targetOverlay) targetOverlay.style.display = 'block';
+                document.getElementById('target-name-lbl').innerText = closest.name;
+                document.getElementById('target-status-lbl').innerText = closest.getConditionText();
+            } else {
+                if (targetOverlay) targetOverlay.style.display = 'none';
+            }
+        } else {
+            targetRing.visible = false;
+            if (targetOverlay) targetOverlay.style.display = 'none';
+        }
+
+        const aspect = window.innerWidth / window.innerHeight;
+        const camDistance = aspect > 1.0 ? 6.0 : 7.5;
+
+        const horizDistance = camDistance * Math.cos(cameraPitch);
+        const vertDistance = camDistance * Math.sin(cameraPitch);
+
+        camera.position.x = playerGroup.position.x + Math.sin(cameraAngle) * horizDistance;
+        camera.position.z = playerGroup.position.z + Math.cos(cameraAngle) * horizDistance;
+        
+        const targetCamY = playerGroup.position.y + vertDistance + 0.5;
+        const groundCamY = getTerrainHeight(camera.position.x, camera.position.z) + 0.4;
+        camera.position.y = Math.max(groundCamY, targetCamY);
+
+        const lookTargetY = playerGroup.position.y + 1.2 - (cameraPitch - 0.4) * 1.8;
+        camera.lookAt(playerGroup.position.x, lookTargetY, playerGroup.position.z);
+
+        renderer.render(scene, camera);
     }
 
-    const jumpBtn = document.getElementById('btn-jump');
-    if (jumpBtn) {
-        jumpBtn.onclick = () => {
-            if (isGrounded) { playerVY = 0.24; isGrounded = false; }
-        };
-    }
+    animate();
 
-
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+    
     // =========================================================================
     // [SECTION 8: DUAL JOYSTICK SYSTEM - MOVEMENT (RIGHT) & CAMERA (LEFT)]
     // =========================================================================
