@@ -485,323 +485,222 @@ function initGameEngine() {
     obstacleColliders.push(boar, stag);
 
     // =========================================================================
-    // [SECTION 7: COMBAT, TIMING, SKILLS & GRID INVENTORY]
+    // [SECTION 10: MAIN ANIMATION & GAME LOOP]
     // =========================================================================
-    const attackBtn = document.getElementById('btn-attack');
-    const skillBtn = document.getElementById('btn-skill');
-
-    // Attack State & Delay Variables
-    let isAttacking = false;
-    let attackTimer = 0;
-    const ATTACK_DURATION = 0.5; // Total swing/cast duration (0.5s time-lapse)
-    let attackDamageDealt = false;
-    let activeSlashMesh = null;
-
-    // --- 3D Visual Mesh Builders ---
-
-    // 1. Melee: Persistent Red Arc Slash
-    function createRedSlashMesh() {
-        const geo = new THREE.RingGeometry(0.8, 1.4, 16, 1, 0, Math.PI * 0.6);
-        const mat = new THREE.MeshBasicMaterial({ color: 0xff2233, side: THREE.DoubleSide, transparent: true, opacity: 0.85 });
-        const mesh = new THREE.Mesh(geo, mat);
-        mesh.rotation.x = -Math.PI / 2; // Lie flat horizontally
-        return mesh;
+    // Re-use clock variable if already declared, otherwise initialize
+    if (typeof clock === 'undefined') {
+        var clock = new THREE.Clock();
     }
 
-    // 2. Hunter: Orange Arrow Projectile
-    function createOrangeArrowMesh() {
-        const group = new THREE.Group();
-        const mat = new THREE.MeshBasicMaterial({ color: 0xff7700 }); // Orange
-        const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.8, 8), mat);
-        shaft.rotation.x = Math.PI / 2;
-        group.add(shaft);
+    function animate() {
+        requestAnimationFrame(animate);
+        const delta = clock.getDelta();
 
-        const tip = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.2, 8), mat);
-        tip.rotation.x = -Math.PI / 2;
-        tip.position.z = 0.4;
-        group.add(tip);
+        // --- ATTACK TIMING & DAMAGE TIME-LAPSE ---
+        if (isAttacking) {
+            attackTimer += delta;
 
-        return group;
-    }
-
-    // 3. Mage: Purple Asterisk (*) Spell
-    function createAsteriskMesh() {
-        const group = new THREE.Group();
-        const mat = new THREE.MeshBasicMaterial({ color: 0xa855f7 }); // Purple
-        const barGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.7, 8);
-
-        // Three crossed bars rotated at 0°, 60°, and 120°
-        for (let i = 0; i < 3; i++) {
-            const bar = new THREE.Mesh(barGeo, mat);
-            bar.rotation.z = (Math.PI / 3) * i;
-            group.add(bar);
-        }
-        return group;
-    }
-
-    // --- Primary Attack Initiation ---
-    function performPrimaryAttack() {
-        if (isAttacking) return; // Prevent spamming while attack is in progress
-
-        isAttacking = true;
-        attackTimer = 0;
-        attackDamageDealt = false;
-
-        const forwardX = -Math.sin(playerGroup.rotation.y);
-        const forwardZ = -Math.cos(playerGroup.rotation.y);
-
-        if (playerClass === 'BRAWLER') {
-            // Spawn Red Slash arc in front of Brawler
-            if (activeSlashMesh) scene.remove(activeSlashMesh);
-            activeSlashMesh = createRedSlashMesh();
-            activeSlashMesh.position.set(
-                playerGroup.position.x + forwardX * 0.8,
-                playerGroup.position.y + 0.9,
-                playerGroup.position.z + forwardZ * 0.8
-            );
-            activeSlashMesh.rotation.z = -playerGroup.rotation.y;
-            scene.add(activeSlashMesh);
-
-        } else if (playerClass === 'HUNTER') {
-            // Spawn Orange Arrow Projectile
-            const arrowMesh = createOrangeArrowMesh();
-            arrowMesh.position.set(playerGroup.position.x, playerGroup.position.y + 1.0, playerGroup.position.z);
-            scene.add(arrowMesh);
-
-            projectiles.push({
-                mesh: arrowMesh,
-                dirX: forwardX,
-                dirZ: forwardZ,
-                speed: 18.0,
-                damage: 10,
-                life: 1.5
-            });
-
-        } else if (playerClass === 'MAGE') {
-            // Spawn Purple Asterisk (*) Spell Projectile
-            const spellMesh = createAsteriskMesh();
-            spellMesh.position.set(playerGroup.position.x, playerGroup.position.y + 1.0, playerGroup.position.z);
-            scene.add(spellMesh);
-
-            projectiles.push({
-                mesh: spellMesh,
-                dirX: forwardX,
-                dirZ: forwardZ,
-                speed: 14.0,
-                damage: 15,
-                life: 1.8
-            });
-        }
-    }
-
-    function performClassSkill() {
-        if (playerClass === 'HUNTER') {
-            const trapMesh = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.6, 0.6, 0.1),
-                new THREE.MeshStandardMaterial({ color: 0x333333 })
-            );
-            trapMesh.position.set(playerGroup.position.x, getTerrainHeight(playerGroup.position.x, playerGroup.position.z) + 0.05, playerGroup.position.z);
-            scene.add(trapMesh);
-            traps.push({ mesh: trapMesh, x: playerGroup.position.x, z: playerGroup.position.z });
-        } else if (playerClass === 'MAGE') {
-            const blast = new THREE.Mesh(
-                new THREE.RingGeometry(0.5, 3.5, 16),
-                new THREE.MeshBasicMaterial({ color: 0xa855f7, side: THREE.DoubleSide })
-            );
-            blast.rotation.x = -Math.PI / 2;
-            blast.position.set(playerGroup.position.x, getTerrainHeight(playerGroup.position.x, playerGroup.position.z) + 0.1, playerGroup.position.z);
-            scene.add(blast);
-            
-            setTimeout(() => scene.remove(blast), 400);
-            creatures.forEach(c => {
-                if (Math.hypot(playerGroup.position.x - c.x, playerGroup.position.z - c.z) < 3.8) {
-                    c.takeDamage(12);
-                }
-            });
-        }
-    }
-
-    if (attackBtn) attackBtn.onclick = performPrimaryAttack;
-    if (skillBtn) skillBtn.onclick = performClassSkill;
-
-    const interactBtn = document.getElementById('btn-interact');
-    if (interactBtn) {
-        interactBtn.onclick = () => {
-            if (!chestLooted && Math.hypot(playerGroup.position.x - chestData.x, playerGroup.position.z - chestData.z) < 2.5) {
-                chestLooted = true;
-                inventory.hatchet += 1;
-                inventory.knife += 1;
-                updateUI();
-                removeHarvestable(chestData);
+            if (activeSlashMesh) {
+                activeSlashMesh.rotation.z += 10.0 * delta;
             }
-        };
-    }
 
-    const jumpBtn = document.getElementById('btn-jump');
-    if (jumpBtn) {
-        jumpBtn.onclick = () => {
-            if (isGrounded) { playerVY = 0.24; isGrounded = false; }
-        };
-    }
+            if (attackTimer >= 0.2 && !attackDamageDealt) {
+                attackDamageDealt = true;
 
-    // =========================================================================
-    // [TOUCH-DRAG GRID INVENTORY SYSTEM WITH AUTO-SHUNTING]
-    // =========================================================================
-    const GRID_COLS = 6;
-    const GRID_ROWS = 4;
-
-    // Items with logic-based grid sizing:
-    // 1x1: Quiver, Dagger, Meat
-    // 2x1: Sword, Axe, Staff
-    // 2x2: Barrel, Chest, Table
-    let gridInventory = [
-        { id: '1', name: 'Dagger', w: 1, h: 1, x: 0, y: 0, color: 'bg-emerald-700' },
-        { id: '2', name: 'Quiver', w: 1, h: 1, x: 1, y: 0, color: 'bg-amber-700' },
-        { id: '3', name: 'Meat', w: 1, h: 1, x: 0, y: 1, color: 'bg-rose-800' },
-        { id: '4', name: 'Sword', w: 1, h: 2, x: 2, y: 0, color: 'bg-indigo-700' },
-        { id: '5', name: 'Great Axe', w: 1, h: 2, x: 3, y: 0, color: 'bg-red-800' },
-        { id: '6', name: 'Barrel', w: 2, h: 2, x: 4, y: 2, color: 'bg-amber-900' }
-    ];
-
-    function checkOverlap(itemA, itemB) {
-        return !(
-            itemA.x + itemA.w <= itemB.x ||
-            itemA.x >= itemB.x + itemB.w ||
-            itemA.y + itemA.h <= itemB.y ||
-            itemA.y >= itemB.y + itemB.h
-        );
-    }
-
-    function isSpaceOccupied(x, y, w, h, excludeId = null) {
-        if (x < 0 || y < 0 || x + w > GRID_COLS || y + h > GRID_ROWS) return true;
-        for (let item of gridInventory) {
-            if (item.id === excludeId) continue;
-            if (checkOverlap({ x, y, w, h }, item)) return true;
-        }
-        return false;
-    }
-
-    // Find nearest open slot for auto-shunting
-    function findClosestOpenSlot(item) {
-        let bestDist = Infinity;
-        let bestCoord = { x: item.x, y: item.y };
-
-        for (let r = 0; r <= GRID_ROWS - item.h; r++) {
-            for (let c = 0; c <= GRID_COLS - item.w; c++) {
-                if (!isSpaceOccupied(c, r, item.w, item.h, item.id)) {
-                    const dist = Math.hypot(c - item.x, r - item.y);
-                    if (dist < bestDist) {
-                        bestDist = dist;
-                        bestCoord = { x: c, y: r };
+                if (playerClass === 'BRAWLER') {
+                    for (let h of harvestables) {
+                        if (Math.hypot(playerGroup.position.x - h.x, playerGroup.position.z - h.z) < 2.5) {
+                            if (h.isCreature) {
+                                h.takeDamage(12);
+                            } else if (!h.isChest) {
+                                h.hp--;
+                                if (h.hp <= 0) {
+                                    inventory[h.dropType] += 3;
+                                    updateUI();
+                                    removeHarvestable(h);
+                                }
+                            }
+                            break;
+                        }
                     }
                 }
             }
-        }
-        return bestCoord;
-    }
 
-    function renderGridInventory() {
-        const container = document.getElementById('inventory-grid-container');
-        if (!container) return;
-        container.innerHTML = '';
-
-        // Render background cell slots
-        for (let r = 0; r < GRID_ROWS; r++) {
-            for (let c = 0; c < GRID_COLS; c++) {
-                const cell = document.createElement('div');
-                cell.style.position = 'absolute';
-                cell.style.left = `${c * 44 + 4}px`;
-                cell.style.top = `${r * 44 + 4}px`;
-                cell.style.width = '40px';
-                cell.style.height = '40px';
-                cell.className = 'bg-slate-900/90 border border-slate-800 rounded';
-                container.appendChild(cell);
+            if (attackTimer >= ATTACK_DURATION) {
+                isAttacking = false;
+                if (activeSlashMesh) {
+                    scene.remove(activeSlashMesh);
+                    activeSlashMesh = null;
+                }
             }
         }
 
-        // Render draggable items
-        gridInventory.forEach(item => {
-            const el = document.createElement('div');
-            el.className = `absolute ${item.color} border border-white/20 rounded shadow-lg flex flex-col items-center justify-center text-[9px] font-bold text-white leading-tight touch-action-manipulation select-none`;
+        // --- CAMERA JOYSTICK ---
+        if (Math.abs(camJoystickVector.x) > 0.05) {
+            cameraAngle -= camJoystickVector.x * 2.5 * delta;
+            timeSinceLastManualCam = 0;
+        }
+
+        if (Math.abs(camJoystickVector.y) > 0.05) {
+            cameraPitch -= camJoystickVector.y * 3.5 * delta;
+            cameraPitch = Math.max(-0.2, Math.min(1.4, cameraPitch));
+            timeSinceLastManualCam = 0;
+        }
+
+        const jx = joystickVector.x;
+        const jy = joystickVector.y;
+
+        if (!isSwipingCamera) {
+            timeSinceLastManualCam += delta;
+        }
+
+        let isMovingForward = jy < -0.3;
+        if (isMovingForward) {
+            continuousMoveTime += delta;
+        } else {
+            continuousMoveTime = 0; 
+        }
+
+        if (Math.abs(jx) > 0.05 || Math.abs(jy) > 0.05) {
+            const moveSpeed = 7.5;
+
+            const dx = (jx * Math.cos(cameraAngle) + jy * Math.sin(cameraAngle)) * moveSpeed * delta;
+            const dz = (-jx * Math.sin(cameraAngle) + jy * Math.cos(cameraAngle)) * moveSpeed * delta;
+
+            const nextX = playerGroup.position.x + dx;
+            const nextZ = playerGroup.position.z + dz;
+
+            if (canMoveTo(nextX, playerGroup.position.z)) playerGroup.position.x = nextX;
+            if (canMoveTo(playerGroup.position.x, nextZ)) playerGroup.position.z = nextZ;
+
+            playerGroup.rotation.y = Math.atan2(dx, dz);
+        }
+
+        for (let obs of obstacleColliders) {
+            const dist = Math.hypot(playerGroup.position.x - obs.x, playerGroup.position.z - obs.z);
+            const minDist = PLAYER_RADIUS + obs.radius;
             
-            const pxLeft = item.x * 44 + 4;
-            const pxTop = item.y * 44 + 4;
-            const pxWidth = item.w * 44 - 4;
-            const pxHeight = item.h * 44 - 4;
+            if (dist < minDist && dist > 0.001) {
+                const overlap = minDist - dist;
+                const pushX = (playerGroup.position.x - obs.x) / dist;
+                const pushZ = (playerGroup.position.z - obs.z) / dist;
+                
+                playerGroup.position.x += pushX * overlap;
+                playerGroup.position.z += pushZ * overlap;
+            }
+        }
 
-            el.style.left = `${pxLeft}px`;
-            el.style.top = `${pxTop}px`;
-            el.style.width = `${pxWidth}px`;
-            el.style.height = `${pxHeight}px`;
-            el.style.zIndex = '10';
-            el.innerHTML = `<span class="px-1 text-center pointer-events-none">${item.name}</span><span class="text-[7px] text-amber-300 pointer-events-none">${item.w}x${item.h}</span>`;
+        if (timeSinceLastManualCam > 1.5 && continuousMoveTime > 0.5) {
+            let targetAngle = playerGroup.rotation.y - Math.PI;
+            let diffAngle = targetAngle - cameraAngle;
+            diffAngle = Math.atan2(Math.sin(diffAngle), Math.cos(diffAngle));
+            
+            const glideSpeed = 2.5; 
+            cameraAngle += diffAngle * glideSpeed * delta;
 
-            // Touch Drag Event Listeners
-            let startClientX = 0, startClientY = 0;
-            let origGridX = item.x, origGridY = item.y;
+            const DEFAULT_PITCH = 0.4;
+            let diffPitch = DEFAULT_PITCH - cameraPitch;
+            cameraPitch += diffPitch * glideSpeed * delta;
+        }
 
-            el.addEventListener('pointerdown', (e) => {
-                e.stopPropagation();
-                el.setPointerCapture(e.pointerId);
-                startClientX = e.clientX;
-                startClientY = e.clientY;
-                origGridX = item.x;
-                origGridY = item.y;
-                el.style.zIndex = '50';
-            });
+        const groundY = getTerrainHeight(playerGroup.position.x, playerGroup.position.z);
+        if (isGrounded) {
+            playerGroup.position.y = groundY;
+        } else {
+            playerGroup.position.y += playerVY;
+            playerVY -= 0.8 * delta;
+            if (playerGroup.position.y <= groundY) {
+                playerGroup.position.y = groundY;
+                playerVY = 0;
+                isGrounded = true;
+            }
+        }
 
-            el.addEventListener('pointermove', (e) => {
-                if (!el.hasPointerCapture(e.pointerId)) return;
-                const dx = e.clientX - startClientX;
-                const dy = e.clientY - startClientY;
-                el.style.left = `${pxLeft + dx}px`;
-                el.style.top = `${pxTop + dy}px`;
-            });
+        creatures.forEach(c => c.update(delta, playerGroup.position));
 
-            el.addEventListener('pointerup', (e) => {
-                if (!el.hasPointerCapture(e.pointerId)) return;
-                el.releasePointerCapture(e.pointerId);
-                el.style.zIndex = '10';
+        for (let i = projectiles.length - 1; i >= 0; i--) {
+            const p = projectiles[i];
+            p.life -= delta;
+            p.mesh.position.x += p.dirX * p.speed * delta;
+            p.mesh.position.z += p.dirZ * p.speed * delta;
 
-                const dx = e.clientX - startClientX;
-                const dy = e.clientY - startClientY;
-
-                let targetX = Math.round(origGridX + dx / 44);
-                let targetY = Math.round(origGridY + dy / 44);
-
-                targetX = Math.max(0, Math.min(GRID_COLS - item.w, targetX));
-                targetY = Math.max(0, Math.min(GRID_ROWS - item.h, targetY));
-
-                item.x = targetX;
-                item.y = targetY;
-
-                // Auto-shunt if position is occupied by another item
-                if (isSpaceOccupied(targetX, targetY, item.w, item.h, item.id)) {
-                    const openSlot = findClosestOpenSlot(item);
-                    item.x = openSlot.x;
-                    item.y = openSlot.y;
+            for (let c of creatures) {
+                if (c.hp > 0 && Math.hypot(p.mesh.position.x - c.x, p.mesh.position.z - c.z) < 1.2) {
+                    c.takeDamage(p.damage);
+                    p.life = 0;
+                    break;
                 }
+            }
 
-                renderGridInventory();
-            });
+            if (p.life <= 0) {
+                scene.remove(p.mesh);
+                projectiles.splice(i, 1);
+            }
+        }
 
-            container.appendChild(el);
+        for (let i = traps.length - 1; i >= 0; i--) {
+            const t = traps[i];
+            for (let c of creatures) {
+                if (c.hp > 0 && Math.hypot(t.x - c.x, t.z - c.z) < 1.0) {
+                    c.rootedTimer = 4.0;
+                    c.takeDamage(5);
+                    scene.remove(t.mesh);
+                    traps.splice(i, 1);
+                    break;
+                }
+            }
+        }
+
+        let closest = null;
+        let minDist = 3.5;
+        harvestables.forEach(h => {
+            const d = Math.hypot(playerGroup.position.x - h.x, playerGroup.position.z - h.z);
+            if (d < minDist) { minDist = d; closest = h; }
         });
+
+        const targetOverlay = document.getElementById('target-info-overlay');
+        if (closest) {
+            targetRing.position.set(closest.x, getTerrainHeight(closest.x, closest.z) + 0.1, closest.z);
+            targetRing.visible = true;
+
+            if (closest.isCreature) {
+                if (targetOverlay) targetOverlay.style.display = 'block';
+                document.getElementById('target-name-lbl').innerText = closest.name;
+                document.getElementById('target-status-lbl').innerText = closest.getConditionText();
+            } else {
+                if (targetOverlay) targetOverlay.style.display = 'none';
+            }
+        } else {
+            targetRing.visible = false;
+            if (targetOverlay) targetOverlay.style.display = 'none';
+        }
+
+        const aspect = window.innerWidth / window.innerHeight;
+        const camDistance = aspect > 1.0 ? 6.0 : 7.5;
+
+        const horizDistance = camDistance * Math.cos(cameraPitch);
+        const vertDistance = camDistance * Math.sin(cameraPitch);
+
+        camera.position.x = playerGroup.position.x + Math.sin(cameraAngle) * horizDistance;
+        camera.position.z = playerGroup.position.z + Math.cos(cameraAngle) * horizDistance;
+        
+        const targetCamY = playerGroup.position.y + vertDistance + 0.5;
+        const groundCamY = getTerrainHeight(camera.position.x, camera.position.z) + 0.4;
+        camera.position.y = Math.max(groundCamY, targetCamY);
+
+        const lookTargetY = playerGroup.position.y + 1.2 - (cameraPitch - 0.4) * 1.8;
+        camera.lookAt(playerGroup.position.x, lookTargetY, playerGroup.position.z);
+
+        renderer.render(scene, camera);
     }
 
-    // Modal UI Listeners
-    document.getElementById('btn-toggle-inventory')?.addEventListener('click', () => {
-        const modal = document.getElementById('inventory-modal');
-        if (modal) {
-            modal.classList.remove('hidden');
-            renderGridInventory();
-        }
-    });
+    animate();
 
-    document.getElementById('btn-close-inventory')?.addEventListener('click', () => {
-        document.getElementById('inventory-modal')?.classList.add('hidden');
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
     });
-
 
     // =========================================================================
     // [SECTION 8: DUAL JOYSTICK SYSTEM - MOVEMENT (RIGHT) & CAMERA (LEFT)]
